@@ -1,0 +1,16 @@
+*.c eol=lf
+*.h eol=lf
+*.cpp eol=lf
+*.def eol=lf
+*.cs eol=lf
+*.csproj eol=lf
+*.sln eol=lf
+*.resx eol=lf
+*.config eol=lf
+*.settings eol=lf
+*.manifest eol=lf
+*.xml eol=lf
+*.php eol=lf
+*.gitignore eol=lf
+*.sln eol=lf
+*.md eol=lf
