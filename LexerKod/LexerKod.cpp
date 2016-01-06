@@ -24,11 +24,9 @@ namespace {
 
 // All from CPP lexer.
 bool IsSpaceEquiv(int state)
-{
-   return (state <= SCE_C_COMMENTDOC) ||
-      // including SCE_C_DEFAULT, SCE_C_COMMENT, SCE_C_COMMENTLINE
-      (state == SCE_C_COMMENTLINEDOC) || (state == SCE_C_COMMENTDOCKEYWORD) ||
-      (state == SCE_C_COMMENTDOCKEYWORDERROR);
+{ 
+   return ((state >= SCE_KOD_COMMENT && state <= SCE_KOD_COMMENTDOCKEYWORDERROR)
+         || state == SCE_KOD_DEFAULT);
 }
 
 // Preconditions: sc.currentPos points to a character after '+' or '-'.
@@ -192,7 +190,7 @@ void highlightTaskMarker(StyleContext &sc, LexAccessor &styler, int activity,
       }
       marker[i] = '\0';
       if (markerList.InList(marker))
-         sc.SetState(SCE_C_TASKMARKER | activity);
+         sc.SetState(SCE_KOD_TASKMARKER | activity);
    }
 }
 
@@ -263,10 +261,10 @@ std::string GetRestOfLine(LexAccessor &styler, int start, bool allowSpace)
 
 bool IsStreamCommentStyle(int style)
 {
-   return style == SCE_C_COMMENT ||
-      style == SCE_C_COMMENTDOC ||
-      style == SCE_C_COMMENTDOCKEYWORD ||
-      style == SCE_C_COMMENTDOCKEYWORDERROR;
+   return style == SCE_KOD_COMMENT ||
+      style == SCE_KOD_COMMENTDOC ||
+      style == SCE_KOD_COMMENTDOCKEYWORD ||
+      style == SCE_KOD_COMMENTDOCKEYWORDERROR;
 }
 
 #pragma endregion
@@ -381,9 +379,7 @@ public:
 // Options used for LexerKod
 struct OptionsKod
 {
-   bool identifiersAllowDollars;
    bool updatePreprocessor;
-   bool verbatimStringsAllowEscapes;
    bool backQuotedStrings;
    bool escapeSequence;
    bool fold;
@@ -400,10 +396,7 @@ struct OptionsKod
 
    OptionsKod()
    {
-      identifiersAllowDollars = false;
       updatePreprocessor = true;
-      verbatimStringsAllowEscapes = false;
-      backQuotedStrings = false;
       escapeSequence = false;
       fold = true;
       foldSyntaxBased = true;
@@ -432,17 +425,8 @@ const char *const kodWordLists[] =
 
 struct OptionSetKod : public OptionSet<OptionsKod> {
    OptionSetKod() {
-      DefineProperty("lexer.kod.allow.dollars", &OptionsKod::identifiersAllowDollars,
-         "Set to 0 to disallow the '$' character in identifiers with the cpp lexer.");
-
       DefineProperty("lexer.kod.update.preprocessor", &OptionsKod::updatePreprocessor,
          "Set to 1 to update preprocessor definitions when #define found.");
-
-      DefineProperty("lexer.kod.verbatim.strings.allow.escapes", &OptionsKod::verbatimStringsAllowEscapes,
-         "Set to 1 to allow verbatim strings to contain escape sequences.");
-
-      DefineProperty("lexer.kod.backquoted.strings", &OptionsKod::backQuotedStrings,
-         "Set to 1 to enable highlighting of back-quoted raw strings .");
 
       DefineProperty("lexer.kod.escape.sequence", &OptionsKod::escapeSequence,
          "Set to 1 to enable highlighting of escape sequences in strings");
@@ -485,7 +469,7 @@ struct OptionSetKod : public OptionSet<OptionsKod> {
    }
 };
 
-const char styleSubable[] = { SCE_C_IDENTIFIER, SCE_C_COMMENTDOCKEYWORD, 0 };
+const char styleSubable[] = { SCE_KOD_IDENTIFIER, SCE_KOD_COMMENTDOCKEYWORD, 0 };
 
 #pragma endregion
 
@@ -631,10 +615,6 @@ public:
    {
       return new LexerKod(true);
    }
-   static ILexer *LexerFactoryCPPInsensitive()
-   {
-      return new LexerKod(false);
-   }
    static int MaskActive(int style)
    {
       return style & ~activeFlag;
@@ -648,13 +628,6 @@ int SCI_METHOD LexerKod::PropertySet(const char *key, const char *val)
 {
    if (osKod.PropertySet(&options, key, val))
    {
-      if (strcmp(key, "lexer.kod.allow.dollars") == 0)
-      {
-         setWord = CharacterSet(CharacterSet::setAlphaNum, "._", 0x80, true);
-         if (options.identifiersAllowDollars)
-            setWord.Add('$');
-      }
-
       return 0;
    }
 
@@ -761,13 +734,10 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
 
    CharacterSet setInvalidRawFirst(CharacterSet::setNone, " )\\\t\v\f\n");
 
-   if (options.identifiersAllowDollars)
-      setWordStart.Add('$');
-
    int chPrevNonWhite = ' ';
    int visibleChars = 0;
-   int styleBeforeDCKeyword = SCE_C_DEFAULT;
-   int styleBeforeTaskMarker = SCE_C_DEFAULT;
+   int styleBeforeDCKeyword = SCE_KOD_DEFAULT;
+   int styleBeforeTaskMarker = SCE_KOD_DEFAULT;
    bool continuationLine = false;
    bool isIncludePreprocessor = false;
    bool isStringInPreprocessor = false;
@@ -775,9 +745,9 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
    bool seenDocKeyBrace = false;
 
    int lineCurrent = styler.GetLine(startPos);
-   if ((MaskActive(initStyle) == SCE_C_PREPROCESSOR) ||
-      (MaskActive(initStyle) == SCE_C_COMMENTLINE) ||
-      (MaskActive(initStyle) == SCE_C_COMMENTLINEDOC))
+   if ((MaskActive(initStyle) == SCE_KOD_PREPROCESSOR) ||
+      (MaskActive(initStyle) == SCE_KOD_COMMENTLINE) ||
+      (MaskActive(initStyle) == SCE_KOD_COMMENTLINEDOC))
    {
       // Set continuationLine if last character of previous line is '\'
       if (lineCurrent > 0)
@@ -796,7 +766,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
       int back = startPos;
       while (--back && IsSpaceEquiv(MaskActive(styler.StyleAt(back))))
          ;
-      if (MaskActive(styler.StyleAt(back)) == SCE_C_OPERATOR)
+      if (MaskActive(styler.StyleAt(back)) == SCE_KOD_OPERATOR)
          chPrevNonWhite = styler.SafeGetCharAt(back);
    }
 
@@ -831,8 +801,8 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
 
    int activitySet = preproc.IsInactive() ? activeFlag : 0;
 
-   const WordClassifier &classifierIdentifiers = subStyles.Classifier(SCE_C_IDENTIFIER);
-   const WordClassifier &classifierDocKeyWords = subStyles.Classifier(SCE_C_COMMENTDOCKEYWORD);
+   const WordClassifier &classifierIdentifiers = subStyles.Classifier(SCE_KOD_IDENTIFIER);
+   const WordClassifier &classifierDocKeyWords = subStyles.Classifier(SCE_KOD_COMMENTDOCKEYWORD);
 
    int lineEndNext = styler.LineEnd(lineCurrent);
 
@@ -840,16 +810,16 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
    {
       if (sc.atLineStart)
       {
-         // Using MaskActive() is not needed in the following statement.
-         // Inside inactive preprocessor declaration, state will be reset anyway at the end of this block.
-         if ((sc.state == SCE_C_STRING) || (sc.state == SCE_C_CHARACTER))
+         if (sc.state == SCE_KOD_STRING)
          {
-            // Prevent SCE_C_STRINGEOL from leaking back to previous line which
+            // Prevent SCE_KOD_STRINGEOL from leaking back to previous line which
             // ends with a line continuation by locking in the state up to this position.
             sc.SetState(sc.state);
          }
-         if ((MaskActive(sc.state) == SCE_C_PREPROCESSOR) && (!continuationLine))
-            sc.SetState(SCE_C_DEFAULT | activitySet);
+         // Using MaskActive() is not needed in the following statement.
+         // Inside inactive preprocessor declaration, state will be reset anyway at the end of this block.
+         if ((MaskActive(sc.state) == SCE_KOD_PREPROCESSOR) && (!continuationLine))
+            sc.SetState(SCE_KOD_DEFAULT | activitySet);
          // Reset states to beginning of colourise so no surprises
          // if different sets of lines lexed.
          visibleChars = 0;
@@ -900,27 +870,28 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
       // Determine if the current state should terminate.
       switch (MaskActive(sc.state))
       {
-      case SCE_C_OPERATOR:
-         sc.SetState(SCE_C_DEFAULT | activitySet);
+      case SCE_KOD_OPERATOR:
+         sc.SetState(SCE_KOD_DEFAULT | activitySet);
          break;
-      case SCE_C_NUMBER:
+      case SCE_KOD_NUMBER:
          // We accept almost anything because of hex. and number suffixes
-         if (sc.ch == '_') {
-            sc.ChangeState(SCE_C_USERLITERAL | activitySet);
+         if (sc.ch == '_')
+         {
+            sc.ChangeState(SCE_KOD_USERLITERAL | activitySet);
          }
          else if (!(setWord.Contains(sc.ch)
             || (sc.ch == '\'')
             || ((sc.ch == '+' || sc.ch == '-') && (sc.chPrev == 'e' || sc.chPrev == 'E' ||
             sc.chPrev == 'p' || sc.chPrev == 'P'))))
          {
-            sc.SetState(SCE_C_DEFAULT | activitySet);
+            sc.SetState(SCE_KOD_DEFAULT | activitySet);
          }
          break;
-      case SCE_C_USERLITERAL:
+      case SCE_KOD_USERLITERAL:
          if (!(setWord.Contains(sc.ch)))
-            sc.SetState(SCE_C_DEFAULT | activitySet);
+            sc.SetState(SCE_KOD_DEFAULT | activitySet);
          break;
-      case SCE_C_IDENTIFIER:
+      case SCE_KOD_IDENTIFIER:
          if (sc.atLineStart || sc.atLineEnd || !setWord.Contains(sc.ch) || (sc.ch == '.'))
          {
             char s[1000];
@@ -931,15 +902,19 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
 
             if (keywords.InList(s))
             {
-               sc.ChangeState(SCE_C_WORD | activitySet);
+               sc.ChangeState(SCE_KOD_KEYWORD | activitySet);
             }
             else if (keywords2.InList(s))
             {
-               sc.ChangeState(SCE_C_WORD2 | activitySet);
+               sc.ChangeState(SCE_KOD_CCALL | activitySet);
+            }
+            else if (keywords3.InList(s))
+            {
+               sc.ChangeState(SCE_KOD_SENDMSG | activitySet);
             }
             else if (keywords4.InList(s))
             {
-               sc.ChangeState(SCE_C_GLOBALCLASS | activitySet);
+               sc.ChangeState(SCE_KOD_WORDOPS | activitySet);
             }
             else
             {
@@ -950,87 +925,29 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
                }
             }
             const bool literalString = sc.ch == '\"';
-            if (literalString || sc.ch == '\'')
+            if (literalString)
             {
                size_t lenS = strlen(s);
-               const bool raw = literalString && sc.chPrev == 'R' && !setInvalidRawFirst.Contains(sc.chNext);
-               if (raw)
-                  s[lenS--] = '\0';
                bool valid =
                   (lenS == 0) ||
                   ((lenS == 1) && ((s[0] == 'L') || (s[0] == 'u') || (s[0] == 'U'))) ||
                   ((lenS == 2) && literalString && (s[0] == 'u') && (s[1] == '8'));
-               if (valid)
+               if (valid && literalString)
                {
-                  if (literalString)
-                  {
-                     if (raw)
-                     {
-                        // Set the style of the string prefix to SCE_C_STRINGRAW but then change to
-                        // SCE_C_DEFAULT as that allows the raw string start code to run.
-                        sc.ChangeState(SCE_C_STRINGRAW | activitySet);
-                        sc.SetState(SCE_C_DEFAULT | activitySet);
-                     }
-                     else
-                     {
-                        sc.ChangeState(SCE_C_STRING | activitySet);
-                     }
-                  }
-                  else
-                  {
-                     sc.ChangeState(SCE_C_CHARACTER | activitySet);
-                  }
+                  sc.ChangeState(SCE_KOD_STRING | activitySet);
                }
                else
                {
-                  sc.SetState(SCE_C_DEFAULT | activitySet);
+                  sc.SetState(SCE_KOD_DEFAULT | activitySet);
                }
             }
             else
             {
-               sc.SetState(SCE_C_DEFAULT | activitySet);
+               sc.SetState(SCE_KOD_DEFAULT | activitySet);
             }
          }
          break;
-      case SCE_C_PREPROCESSOR:
-         if (isStringInPreprocessor && (sc.Match('>') || sc.Match('\"') || sc.atLineEnd))
-         {
-            isStringInPreprocessor = false;
-         }
-         else if (!isStringInPreprocessor)
-         {
-            if ((isIncludePreprocessor && sc.Match('<')) || sc.Match('\"'))
-            {
-               isStringInPreprocessor = true;
-            }
-            else if (sc.Match('/', '*'))
-            {
-               if (sc.Match("/**") || sc.Match("/*!"))
-               {
-                  sc.SetState(SCE_C_PREPROCESSORCOMMENTDOC | activitySet);
-               }
-               else
-               {
-                  sc.SetState(SCE_C_PREPROCESSORCOMMENT | activitySet);
-               }
-               sc.Forward();	// Eat the *
-            }
-            else if (sc.Match('/', '/'))
-            {
-               sc.SetState(SCE_C_DEFAULT | activitySet);
-            }
-         }
-         break;
-      case SCE_C_PREPROCESSORCOMMENT:
-      case SCE_C_PREPROCESSORCOMMENTDOC:
-         if (sc.Match('*', '/'))
-         {
-            sc.Forward();
-            sc.ForwardSetState(SCE_C_PREPROCESSOR | activitySet);
-            continue;	// Without advancing in case of '\'.
-         }
-         break;
-      case SCE_C_COMMENT:
+      case SCE_KOD_COMMENT:
          if (sc.Match('*', '/'))
          {
             if (curNcLevel > 0)
@@ -1039,9 +956,9 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
             styler.SetLineState(lineCurrent, curNcLevel);
             sc.Forward();
             if (curNcLevel < 1)
-               sc.ForwardSetState(SCE_C_DEFAULT | activitySet);
+               sc.ForwardSetState(SCE_KOD_DEFAULT | activitySet);
             else
-               sc.ForwardSetState(SCE_C_COMMENT | activitySet);
+               sc.ForwardSetState(SCE_KOD_COMMENT | activitySet);
          }
          else
          {
@@ -1051,58 +968,58 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
                lineCurrent = styler.GetLine(sc.currentPos);
                styler.SetLineState(lineCurrent, curNcLevel);
                sc.Forward();	// Eat the * so it isn't used for the end of the comment
-               sc.ForwardSetState(SCE_C_COMMENT | activitySet);
+               sc.ForwardSetState(SCE_KOD_COMMENT | activitySet);
             }
 
-            styleBeforeTaskMarker = SCE_C_COMMENT;
+            styleBeforeTaskMarker = SCE_KOD_COMMENT;
             highlightTaskMarker(sc, styler, activitySet, markerList, caseSensitive);
          }
          break;
-      case SCE_C_COMMENTDOC:
+      case SCE_KOD_COMMENTDOC:
          if (sc.Match('*', '/'))
          {
             sc.Forward();
-            sc.ForwardSetState(SCE_C_DEFAULT | activitySet);
+            sc.ForwardSetState(SCE_KOD_DEFAULT | activitySet);
          }
          else if (sc.ch == '@' || sc.ch == '\\') { // JavaDoc and Doxygen support
             // Verify that we have the conditions to mark a comment-doc-keyword
             if ((IsASpace(sc.chPrev) || sc.chPrev == '*') && (!IsASpace(sc.chNext)))
             {
-               styleBeforeDCKeyword = SCE_C_COMMENTDOC;
-               sc.SetState(SCE_C_COMMENTDOCKEYWORD | activitySet);
+               styleBeforeDCKeyword = SCE_KOD_COMMENTDOC;
+               sc.SetState(SCE_KOD_COMMENTDOCKEYWORD | activitySet);
             }
          }
          break;
-      case SCE_C_COMMENTLINE:
+      case SCE_KOD_COMMENTLINE:
          if (sc.atLineStart && !continuationLine)
          {
-            sc.SetState(SCE_C_DEFAULT | activitySet);
+            sc.SetState(SCE_KOD_DEFAULT | activitySet);
          }
          else {
-            styleBeforeTaskMarker = SCE_C_COMMENTLINE;
+            styleBeforeTaskMarker = SCE_KOD_COMMENTLINE;
             highlightTaskMarker(sc, styler, activitySet, markerList, caseSensitive);
          }
          break;
-      case SCE_C_COMMENTLINEDOC:
+      case SCE_KOD_COMMENTLINEDOC:
          if (sc.atLineStart && !continuationLine)
          {
-            sc.SetState(SCE_C_DEFAULT | activitySet);
+            sc.SetState(SCE_KOD_DEFAULT | activitySet);
          }
          else if (sc.ch == '@' || sc.ch == '\\') { // JavaDoc and Doxygen support
             // Verify that we have the conditions to mark a comment-doc-keyword
             if ((IsASpace(sc.chPrev) || sc.chPrev == '/' || sc.chPrev == '!') && (!IsASpace(sc.chNext)))
             {
-               styleBeforeDCKeyword = SCE_C_COMMENTLINEDOC;
-               sc.SetState(SCE_C_COMMENTDOCKEYWORD | activitySet);
+               styleBeforeDCKeyword = SCE_KOD_COMMENTLINEDOC;
+               sc.SetState(SCE_KOD_COMMENTDOCKEYWORD | activitySet);
             }
          }
          break;
-      case SCE_C_COMMENTDOCKEYWORD:
-         if ((styleBeforeDCKeyword == SCE_C_COMMENTDOC) && sc.Match('*', '/'))
+      case SCE_KOD_COMMENTDOCKEYWORD:
+         if ((styleBeforeDCKeyword == SCE_KOD_COMMENTDOC) && sc.Match('*', '/'))
          {
-            sc.ChangeState(SCE_C_COMMENTDOCKEYWORDERROR);
+            sc.ChangeState(SCE_KOD_COMMENTDOCKEYWORDERROR);
             sc.Forward();
-            sc.ForwardSetState(SCE_C_DEFAULT | activitySet);
+            sc.ForwardSetState(SCE_KOD_DEFAULT | activitySet);
             seenDocKeyBrace = false;
          }
          else if (sc.ch == '[' || sc.ch == '{')
@@ -1123,7 +1040,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
             }
             if (!(IsASpace(sc.ch) || (sc.ch == 0)))
             {
-               sc.ChangeState(SCE_C_COMMENTDOCKEYWORDERROR | activitySet);
+               sc.ChangeState(SCE_KOD_COMMENTDOCKEYWORDERROR | activitySet);
             }
             else if (!keywords3.InList(s + 1))
             {
@@ -1134,31 +1051,23 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
                }
                else
                {
-                  sc.ChangeState(SCE_C_COMMENTDOCKEYWORDERROR | activitySet);
+                  sc.ChangeState(SCE_KOD_COMMENTDOCKEYWORDERROR | activitySet);
                }
             }
             sc.SetState(styleBeforeDCKeyword | activitySet);
             seenDocKeyBrace = false;
          }
          break;
-      case SCE_C_STRING:
+      case SCE_KOD_STRING:
          if (sc.atLineEnd)
          {
-            sc.ChangeState(SCE_C_STRINGEOL | activitySet);
-         }
-         else if (isIncludePreprocessor)
-         {
-            if (sc.ch == '>')
-            {
-               sc.ForwardSetState(SCE_C_DEFAULT | activitySet);
-               isIncludePreprocessor = false;
-            }
+            sc.ChangeState(SCE_KOD_STRINGEOL | activitySet);
          }
          else if (sc.ch == '\\')
          {
             if (options.escapeSequence)
             {
-               sc.SetState(SCE_C_ESCAPESEQUENCE | activitySet);
+               sc.SetState(SCE_KOD_ESCAPESEQUENCE | activitySet);
                escapeSeq.resetEscapeState(sc.chNext);
             }
             sc.Forward(); // Skip all characters after the backslash
@@ -1167,15 +1076,15 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          {
             if (sc.chNext == '_')
             {
-               sc.ChangeState(SCE_C_USERLITERAL | activitySet);
+               sc.ChangeState(SCE_KOD_USERLITERAL | activitySet);
             }
             else
             {
-               sc.ForwardSetState(SCE_C_DEFAULT | activitySet);
+               sc.ForwardSetState(SCE_KOD_DEFAULT | activitySet);
             }
          }
          break;
-      case SCE_C_ESCAPESEQUENCE:
+      case SCE_KOD_ESCAPESEQUENCE:
          escapeSeq.digitsLeft--;
          if (!escapeSeq.atEscapeEnd(sc.ch))
          {
@@ -1183,8 +1092,8 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          }
          if (sc.ch == '"')
          {
-            sc.SetState(SCE_C_STRING | activitySet);
-            sc.ForwardSetState(SCE_C_DEFAULT | activitySet);
+            sc.SetState(SCE_KOD_STRING | activitySet);
+            sc.ForwardSetState(SCE_KOD_DEFAULT | activitySet);
          }
          else if (sc.ch == '\\')
          {
@@ -1193,100 +1102,31 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          }
          else
          {
-            sc.SetState(SCE_C_STRING | activitySet);
+            sc.SetState(SCE_KOD_STRING | activitySet);
             if (sc.atLineEnd)
             {
-               sc.ChangeState(SCE_C_STRINGEOL | activitySet);
+               sc.ChangeState(SCE_KOD_STRINGEOL | activitySet);
             }
          }
          break;
-      case SCE_C_STRINGRAW:
-         if (sc.Match(rawStringTerminator.c_str()))
+      case SCE_KOD_MESSAGE:
+      case SCE_KOD_CLASS:
+         if (sc.ch == ',' || sc.ch == ')' || sc.ch == '\n')
          {
-            for (size_t termPos = rawStringTerminator.size(); termPos; termPos--)
-               sc.Forward();
-            sc.SetState(SCE_C_DEFAULT | activitySet);
-            rawStringTerminator = "";
+            sc.SetState(SCE_KOD_DEFAULT | activitySet);
          }
          break;
-      case SCE_C_CHARACTER:
-         if (sc.atLineEnd)
-         {
-            sc.ChangeState(SCE_C_STRINGEOL | activitySet);
-         }
-         else if (sc.ch == '\\')
-         {
-            if (sc.chNext == '\"' || sc.chNext == '\'' || sc.chNext == '\\')
-            {
-               sc.Forward();
-            }
-         }
-         else if (sc.ch == '\'')
-         {
-            if (sc.chNext == '_')
-            {
-               sc.ChangeState(SCE_C_USERLITERAL | activitySet);
-            }
-            else
-            {
-               sc.ForwardSetState(SCE_C_DEFAULT | activitySet);
-            }
-         }
-         break;
-      case SCE_C_REGEX:
+      case SCE_KOD_STRINGEOL:
          if (sc.atLineStart)
          {
-            sc.SetState(SCE_C_DEFAULT | activitySet);
-         }
-         else if (!inRERange && sc.ch == '/')
-         {
-            sc.Forward();
-            while ((sc.ch < 0x80) && islower(sc.ch))
-               sc.Forward();    // gobble regex flags
-            sc.SetState(SCE_C_DEFAULT | activitySet);
-         }
-         else if (sc.ch == '\\' && (static_cast<int>(sc.currentPos + 1) < lineEndNext))
-         {
-            // Gobble up the escaped character
-            sc.Forward();
-         }
-         else if (sc.ch == '[')
-         {
-            inRERange = true;
-         }
-         else if (sc.ch == ']')
-         {
-            inRERange = false;
+            sc.SetState(SCE_KOD_DEFAULT | activitySet);
          }
          break;
-      case SCE_C_STRINGEOL:
-         if (sc.atLineStart)
-         {
-            sc.SetState(SCE_C_DEFAULT | activitySet);
-         }
-         break;
-      case SCE_C_VERBATIM:
-         if (options.verbatimStringsAllowEscapes && (sc.ch == '\\'))
-         {
-            sc.Forward(); // Skip all characters after the backslash
-         }
-         else if (sc.ch == '\"')
-         {
-            if (sc.chNext == '\"')
-            {
-               sc.Forward();
-            }
-            else
-            {
-               sc.ForwardSetState(SCE_C_DEFAULT | activitySet);
-            }
-         }
-         break;
-      case SCE_C_TASKMARKER:
+      case SCE_KOD_TASKMARKER:
          if (isoperator(sc.ch) || IsASpace(sc.ch))
          {
             sc.SetState(styleBeforeTaskMarker | activitySet);
-            styleBeforeTaskMarker = SCE_C_DEFAULT;
+            styleBeforeTaskMarker = SCE_KOD_DEFAULT;
          }
       }
 
@@ -1299,38 +1139,36 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
       }
 
       // Determine if a new state should be entered.
-      if (MaskActive(sc.state) == SCE_C_DEFAULT)
+      if (MaskActive(sc.state) == SCE_KOD_DEFAULT)
       {
-         if (sc.Match('@', '\"'))
+         if (sc.ch == '@' && visibleChars && !sc.atLineEnd && IsUpperCase(sc.chNext))
          {
-            sc.SetState(SCE_C_VERBATIM | activitySet);
-            sc.Forward();
+            sc.SetState(SCE_KOD_MESSAGE | activitySet);
          }
-         else if (options.backQuotedStrings && sc.Match('`'))
+         else if (sc.ch == '&' && visibleChars && !sc.atLineEnd && IsUpperCase(sc.chNext))
          {
-            sc.SetState(SCE_C_STRINGRAW | activitySet);
-            rawStringTerminator = "`";
+            sc.SetState(SCE_KOD_CLASS | activitySet);
          }
          else if (IsADigit(sc.ch) || (sc.ch == '.' && IsADigit(sc.chNext)))
          {
-            sc.SetState(SCE_C_NUMBER | activitySet);
+            sc.SetState(SCE_KOD_NUMBER | activitySet);
          }
-         else if (!sc.atLineEnd && (setWordStart.Contains(sc.ch) || (sc.ch == '@')))
+         else if (!sc.atLineEnd && setWordStart.Contains(sc.ch))
          {
-            sc.SetState(SCE_C_IDENTIFIER | activitySet);
+            sc.SetState(SCE_KOD_IDENTIFIER | activitySet);
          }
          else if (sc.Match('/', '*'))
          {
             if (sc.Match("/**") || sc.Match("/*!"))
             {	// Support of Qt/Doxygen doc. style
-               sc.SetState(SCE_C_COMMENTDOC | activitySet);
+               sc.SetState(SCE_KOD_COMMENTDOC | activitySet);
             }
             else
             {
                ++curNcLevel;
                lineCurrent = styler.GetLine(sc.currentPos);
                styler.SetLineState(lineCurrent, curNcLevel);
-               sc.SetState(SCE_C_COMMENT | activitySet);
+               sc.SetState(SCE_KOD_COMMENT | activitySet);
             }
             sc.Forward();	// Eat the * so it isn't used for the end of the comment
          }
@@ -1338,64 +1176,22 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          {
             if ((sc.Match("///") && !sc.Match("////")) || sc.Match("//!"))
                // Support of Qt/Doxygen doc. style
-               sc.SetState(SCE_C_COMMENTLINEDOC | activitySet);
+               sc.SetState(SCE_KOD_COMMENTLINEDOC | activitySet);
             else
-               sc.SetState(SCE_C_COMMENTLINE | activitySet);
-         }
-         else if (sc.ch == '/'
-            && (setOKBeforeRE.Contains(chPrevNonWhite)
-            || FollowsReturnKeyword(sc, styler))
-            && (!setCouldBePostOp.Contains(chPrevNonWhite)
-            || !FollowsPostfixOperator(sc, styler)))
-         {
-            sc.SetState(SCE_C_REGEX | activitySet);	// JavaScript's RegEx
-            inRERange = false;
+               sc.SetState(SCE_KOD_COMMENTLINE | activitySet);
          }
          else if (sc.ch == '\"')
          {
-            if (sc.chPrev == 'R')
-            {
-               styler.Flush();
-               if (MaskActive(styler.StyleAt(sc.currentPos - 1)) == SCE_C_STRINGRAW)
-               {
-                  sc.SetState(SCE_C_STRINGRAW | activitySet);
-                  rawStringTerminator = ")";
-                  for (int termPos = sc.currentPos + 1;; termPos++)
-                  {
-                     char chTerminator = styler.SafeGetCharAt(termPos, '(');
-                     if (chTerminator == '(')
-                        break;
-                     rawStringTerminator += chTerminator;
-                  }
-                  rawStringTerminator += '\"';
-               }
-               else
-               {
-                  sc.SetState(SCE_C_STRING | activitySet);
-               }
-            }
-            else
-            {
-               sc.SetState(SCE_C_STRING | activitySet);
-            }
-            isIncludePreprocessor = false;	// ensure that '>' won't end the string
+            sc.SetState(SCE_KOD_STRING | activitySet);
          }
-         else if (isIncludePreprocessor && sc.ch == '<')
+         else if (isoperator(sc.ch) || sc.ch == '$')
          {
-            sc.SetState(SCE_C_STRING | activitySet);
-         }
-         else if (sc.ch == '\'')
-         {
-            sc.SetState(SCE_C_CHARACTER | activitySet);
-         }
-         else if (isoperator(sc.ch))
-         {
-            sc.SetState(SCE_C_OPERATOR | activitySet);
+            sc.SetState(SCE_KOD_OPERATOR | activitySet);
          }
          else if (visibleChars == 0 && IsRegionLine(sc, styler))
          {
             // Preprocessor commands are alone on their line
-            sc.SetState(SCE_C_PREPROCESSOR | activitySet);
+            sc.SetState(SCE_KOD_PREPROCESSOR | activitySet);
          }
       }
 
@@ -1443,7 +1239,7 @@ void SCI_METHOD LexerKod::Fold(unsigned int startPos, int length, int initStyle,
       style = styleNext;
       styleNext = MaskActive(styler.StyleAt(i + 1));
       bool atEOL = i == (lineStartNext - 1);
-      if ((style == SCE_C_COMMENTLINE) || (style == SCE_C_COMMENTLINEDOC))
+      if ((style == SCE_KOD_COMMENTLINE) || (style == SCE_KOD_COMMENTLINEDOC))
          inLineComment = true;
       if (options.foldComment && options.foldCommentMultiline && IsStreamCommentStyle(style) && !inLineComment)
       {
@@ -1457,7 +1253,7 @@ void SCI_METHOD LexerKod::Fold(unsigned int startPos, int length, int initStyle,
             levelNext--;
          }
       }
-      if (options.foldComment && options.foldCommentExplicit && ((style == SCE_C_COMMENTLINE) || options.foldExplicitAnywhere))
+      if (options.foldComment && options.foldCommentExplicit && ((style == SCE_KOD_COMMENTLINE) || options.foldExplicitAnywhere))
       {
          if (userDefinedFoldMarkers)
          {
@@ -1486,7 +1282,7 @@ void SCI_METHOD LexerKod::Fold(unsigned int startPos, int length, int initStyle,
             }
          }
       }
-      if (options.foldPreprocessor && (style == SCE_C_PREPROCESSOR))
+      if (options.foldPreprocessor && (style == SCE_KOD_PREPROCESSOR))
       {
          if (ch == '#')
          {
@@ -1505,7 +1301,7 @@ void SCI_METHOD LexerKod::Fold(unsigned int startPos, int length, int initStyle,
             }
          }
       }
-      if (options.foldSyntaxBased && (style == SCE_C_OPERATOR))
+      if (options.foldSyntaxBased && (style == SCE_KOD_OPERATOR))
       {
          if (ch == '{' || ch == '[')
          {
