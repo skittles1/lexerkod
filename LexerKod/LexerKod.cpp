@@ -272,7 +272,6 @@ bool IsStreamCommentStyle(int style)
 #pragma region Preprocessor Functions
 
 // TODO: While not used in kod, this section should be repurposed for handling constants.
-// Can also handle region folding.
 
 struct PPDefinition
 {
@@ -490,7 +489,7 @@ class LexerKod final : public ILexerWithSubStyles
    WordList keywords2;
    WordList keywords3;
    WordList keywords4;
-   WordList ppDefinitions;
+   WordList keywords5;
    WordList markerList;
 
    struct SymbolValue
@@ -652,7 +651,7 @@ int SCI_METHOD LexerKod::WordListSet(int n, const char *wl)
       wordListN = &keywords4;
       break;
    case 4:
-      wordListN = &ppDefinitions;
+      wordListN = &keywords5;
       break;
    case 5:
       wordListN = &markerList;
@@ -671,9 +670,9 @@ int SCI_METHOD LexerKod::WordListSet(int n, const char *wl)
          {
             // Rebuild preprocessorDefinitions
             preprocessorDefinitionsStart.clear();
-            for (int nDefinition = 0; nDefinition < ppDefinitions.Length(); nDefinition++)
+            for (int nDefinition = 0; nDefinition < keywords5.Length(); nDefinition++)
             {
-               const char *cpDefinition = ppDefinitions.WordAt(nDefinition);
+               const char *cpDefinition = keywords5.WordAt(nDefinition);
                const char *cpEquals = strchr(cpDefinition, '=');
                if (cpEquals)
                {
@@ -915,6 +914,10 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
             else if (keywords4.InList(s))
             {
                sc.ChangeState(SCE_KOD_WORDOPS | activitySet);
+            }
+            else if (keywords5.InList(s))
+            {
+               sc.ChangeState(SCE_KOD_CONSTANT | activitySet);
             }
             else
             {

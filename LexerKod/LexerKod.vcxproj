@@ -106,6 +106,9 @@
   <ItemGroup>
     <ResourceCompile Include="Plugin.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="AutoComplete\kod.xml" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

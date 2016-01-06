@@ -1,0 +1,572 @@
+<?xml version="1.0" encoding="Windows-1252" ?>
+<NotepadPlus>
+   <AutoComplete language="Kod">
+      <Environment ignoreCase="no" startFunc="(" stopFunc=")" paramSeparator="," terminal=";"/>
+      <KeyWord name="Abs" func="yes">
+         <Overload retVal="int">
+            <Param name="int"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="AddPacket" func="yes">
+         <Overload retVal="$" descr="Takes multiple sets of param_byte_size, param">
+            <Param name="int param_byte_size"/>
+            <Param name="param"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="AddTableEntry" func="yes">
+         <Overload retVal="$">
+            <Param name="table"/>
+            <Param name="key"/>
+            <Param name="data"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="AppendListElem" func="yes">
+         <Overload retVal="list">
+            <Param name="element"/>
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="AppendTempString" func="yes">
+         <Overload retVal="$">
+            <Param name="param"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="BlockerAddBSP" func="yes">
+         <Overload retVal="boolean">
+            <Param name="room_data"/>
+            <Param name="object"/>
+            <Param name="row"/>
+            <Param name="col"/>
+            <Param name="finerow"/>
+            <Param name="finecol"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="BlockerClearBSP" func="yes">
+         <Overload retVal="boolean">
+            <Param name="room_data"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="BlockerMoveBSP" func="yes">
+         <Overload retVal="boolean">
+            <Param name="room_data"/>
+            <Param name="object"/>
+            <Param name="row"/>
+            <Param name="col"/>
+            <Param name="finerow"/>
+            <Param name="finecol"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="BlockerRemoveBSP" func="yes">
+         <Overload retVal="boolean">
+            <Param name="room_data"/>
+            <Param name="object"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Bound" func="yes">
+         <Overload retVal="int">
+            <Param name="int number"/>
+            <Param name="int min"/>
+            <Param name="int max"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="CanMoveInRoomBSP" func="yes">
+         <Overload retVal="boolean">
+            <Param name="room_data"/>
+            <Param name="initial row"/>
+            <Param name="initial col"/>
+            <Param name="initial finerow"/>
+            <Param name="initial finecol"/>
+            <Param name="dest row"/>
+            <Param name="dest col"/>
+            <Param name="dest finerow"/>
+            <Param name="dest finecol"/>
+            <Param name="object"/>
+            <Param name="bool move_outside_BSP"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="ChangeTextureBSP" func="yes">
+         <Overload retVal="false">
+            <Param name="room_data"/>
+            <Param name="int sector_id"/>
+            <Param name="int texture_num"/>
+            <Param name="int texture_flags"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="ClearPacket" func="yes">
+         <Overload retVal="$">
+         </Overload>
+      </KeyWord>
+      <KeyWord name="ClearTempString" func="yes">
+         <Overload retVal="TAG_TEMP_STRING">
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Cons" func="yes">
+         <Overload retVal="list">
+            <Param name="element"/>
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Create" func="yes">
+         <Overload retVal="object">
+            <Param name="class"/>
+            <Param name="params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="CreateString" func="yes">
+         <Overload retVal="string" descr="Deprecated - use str = SetString($,str_contents).">
+         </Overload>
+      </KeyWord>
+      <KeyWord name="CreateTable" func="yes">
+         <Overload retVal="table">
+            <Param name="int table_size"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="CreateTimer" func="yes">
+         <Overload retVal="timer" descr="No message params allowed. Called msg receives the timer as param timer.">
+            <Param name="object"/>
+            <Param name="message"/>
+            <Param name="int milliseconds"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Debug" func="yes">
+         <Overload retVal="$">
+            <Param name="params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="DeleteTableEntry" func="yes">
+         <Overload retVal="$">
+            <Param name="table"/>
+            <Param name="key"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="DeleteTimer" func="yes">
+         <Overload retVal="boolean" descr="Returns $ if not passed a timer.">
+            <Param name="timer"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="DelListElem" func="yes">
+         <Overload retVal="boolean" descr="Returns $ if not passed a list.">
+            <Param name="list"/>
+            <Param name="element"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="DumpStack" func="yes">
+         <Overload retVal="$" descr="Prints the Blakod message call stack to debug.">
+         </Overload>
+      </KeyWord>
+      <KeyWord name="FindListElem" func="yes">
+         <Overload retVal="$ or int list_position" descr="Returns the int position of the element if found in the list, or $ if not found.">
+            <Param name="list"/>
+            <Param name="elem"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="First" func="yes">
+         <Overload retVal="list_elem">
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="FreeRoom" func="yes">
+         <Overload retVal="$" descr="Frees the room from memory. Required on room deletion.">
+            <Param name="room_data"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetAllListNodesByClass" func="yes">
+         <Overload retVal="list" descr="Position 0 checks list, 1 checks First(list) etc. Returns new list of all objects matching the class.">
+            <Param name="list"/>
+            <Param name="int list_position"/>
+            <Param name="class"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetClass" func="yes">
+         <Overload retVal="class">
+            <Param name="object"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetInactiveTime" func="yes">
+         <Overload retVal="int seconds">
+            <Param name="session"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetListElemByClass" func="yes">
+         <Overload retVal="list_elem" descr="Returns first instance found, or $ if not found.">
+            <Param name="list"/>
+            <Param name="class"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetListNode" func="yes">
+         <Overload retVal="list" descr="Checks sublists of list for list_elem at the given position. Returns first matching sublist, or $ if not found.">
+            <Param name="list"/>
+            <Param name="int list_position"/>
+            <Param name="list_elem"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetLocationInfoBSP" func="yes">
+         <Overload retVal="boolean" descr="Puts the values into the passed localvars.">
+            <Param name="room_data"/>
+            <Param name="int query_flags"/>
+            <Param name="row"/>
+            <Param name="col"/>
+            <Param name="finerow"/>
+            <Param name="finecol"/>
+            <Param name="*localvar return_flags"/>
+            <Param name="*localvar floor_height"/>
+            <Param name="*localvar floor_height_with_depth"/>
+            <Param name="*localvar ceiling_height"/>
+            <Param name="*localvar sector_id"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetRandomPointBSP" func="yes">
+         <Overload retVal="boolean" descr="Puts the values into the passed localvars.">
+            <Param name="room_data"/>
+            <Param name="int max_attempts"/>
+            <Param name="*localvar row"/>
+            <Param name="*localvar col"/>
+            <Param name="*localvar finerow"/>
+            <Param name="*localvar finecol"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetSessionIP" func="yes">
+         <Overload retVal="list" descr="Returns a 16-element list containing IP.">
+            <Param name="session"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetStepTowardsBSP" func="yes">
+         <Overload retVal="int state_flags" descr="Puts the dest values into the passed localvars. Returns $ if an error occurs.">
+            <Param name="room_data"/>
+            <Param name="row"/>
+            <Param name="col"/>
+            <Param name="finerow"/>
+            <Param name="finecol"/>
+            <Param name="*localvar dest_row"/>
+            <Param name="*localvar dest_col"/>
+            <Param name="*localvar dest_finerow"/>
+            <Param name="*localvar dest_finecol"/>
+            <Param name="int state_flags"/>
+            <Param name="object"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetTableEntry" func="yes">
+         <Overload retVal="data">
+            <Param name="table"/>
+            <Param name="key"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetTempString" func="yes">
+         <Overload retVal="TAG_TEMP_STRING">
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetTickCount" func="yes">
+         <Overload retVal="int milliseconds">
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetTime" func="yes">
+         <Overload retVal="int seconds">
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetTimeRemaining" func="yes">
+         <Overload retVal="int milliseconds">
+            <Param name="timer"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetTimeZoneOffset" func="yes">
+         <Overload retVal="int seconds" descr="Returns the amount of seconds that must be added to local time to equal UTC. Subtracting this number from UTC (GetTime()) equals local time.">
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GodLog" func="yes">
+         <Overload retVal="$">
+            <Param name="params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="InsertListElem" func="yes">
+         <Overload retVal="list" descr="Inserts element at list_position in list.">
+            <Param name="list"/>
+            <Param name="int list_position"/>
+            <Param name="element"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="IsClass" func="yes">
+         <Overload retVal="boolean">
+            <Param name="object"/>
+            <Param name="class"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="IsList" func="yes">
+         <Overload retVal="boolean" descr="Returns true if passed $.">
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="IsListMatch" func="yes">
+         <Overload retVal="boolean" descr="Contents of any sub-lists are also checked.">
+            <Param name="list"/>
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="IsObject" func="yes">
+         <Overload retVal="boolean">
+            <Param name="object"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="IsString" func="yes">
+         <Overload retVal="boolean" descr="Checks kod strings of type TAG_STRING.">
+            <Param name="string"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="IsTable" func="yes">
+         <Overload retVal="boolean">
+            <Param name="table"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="IsTimer" func="yes">
+         <Overload retVal="boolean">
+            <Param name="timer"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Last" func="yes">
+         <Overload retVal="list_elem">
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Length" func="yes">
+         <Overload retVal="int">
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="LineOfSightBSP" func="yes">
+         <Overload retVal="boolean" descr="Checks if the two locations can see each other.">
+            <Param name="room_data"/>
+            <Param name="initial row"/>
+            <Param name="initial col"/>
+            <Param name="initial finerow"/>
+            <Param name="initial finecol"/>
+            <Param name="dest row"/>
+            <Param name="dest col"/>
+            <Param name="dest finerow"/>
+            <Param name="dest finecol"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="LineOfSightView" func="yes">
+         <Overload retVal="boolean" descr="Checks if the object at the initial coords can see the dest coords, if they are facing kod_angle degrees. Does not check BSP tree for blocking walls.">
+            <Param name="int kod_angle"/>
+            <Param name="initial row"/>
+            <Param name="initial col"/>
+            <Param name="initial finerow"/>
+            <Param name="initial finecol"/>
+            <Param name="dest row"/>
+            <Param name="dest col"/>
+            <Param name="dest finerow"/>
+            <Param name="dest finecol"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="ListCopy" func="yes">
+         <Overload retVal="list" descr="Makes a new copy of the list, including any sub-lists.">
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="LoadGame" func="yes">
+         <Overload retVal="$" descr="Takes a string containing a Blakserv savegame time and posts a message to the main thread to reload that game.">
+            <Param name="string"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="LoadRoom" func="yes">
+         <Overload retVal="TAG_ROOM_DATA room_data">
+            <Param name="resource filename"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="MiniGameNumberToString" func="yes">
+         <Overload retVal="$" descr="Sets the given string to the given number.">
+            <Param name="string"/>
+            <Param name="int number"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="MiniGameStringToNumber" func="yes">
+         <Overload retVal="int">
+            <Param name="string"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="MoveSectorBSP" func="yes">
+         <Overload retVal="0">
+            <Param name="room_data"/>
+            <Param name="int sector_id"/>
+            <Param name="int animation_flags"/>
+            <Param name="int height"/>
+            <Param name="int speed"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Nth" func="yes">
+         <Overload retVal="list_elem" descr="Use First(list) instead of Nth(list,1) and Last(list) instead of Nth(list,Length(list)).">
+            <Param name="list"/>
+            <Param name="int list_position"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="ParseString" func="yes">
+         <Overload retVal="$" descr="Splits the temp_string into tokens using the debug_string as the separator, and calls message for each token. The token is passed as parameter string (but doesn't need to be added to the ParseString call.">
+            <Param name="temp_string"/>
+            <Param name="debug_string"/>
+            <Param name="message"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Post" func="yes">
+         <Overload retVal="$" descr="Message is called after current current message stack completed. Can also accept a kod string containing a message name instead of @Message, and a built-in object constant instead of an object.">
+            <Param name="object"/>
+            <Param name="message"/>
+            <Param name="params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Random" func="yes">
+         <Overload retVal="int" descr="Bounds are inclusive.">
+            <Param name="int low_bound"/>
+            <Param name="int high_bound"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="RecordStat" func="yes">
+         <Overload retVal="$" descr="Record data to MySQL database.">
+            <Param name="int stat_type"/>
+            <Param name="params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="RecycleUser" func="yes">
+         <Overload retVal="object" descr="Deletes a user object from an account and adds another of the same class. Posts @Delete to the old object.">
+            <Param name="object"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Rest" func="yes">
+         <Overload retVal="list" descr="Returns the list with the first element removed.">
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="RoomData" func="yes">
+         <Overload retVal="list" descr="Returns a list containing the room's max rows, cols, room security, high-res rows and high-res cols.">
+            <Param name="room_data"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SaveGame" func="yes">
+         <Overload retVal="string" descr="Saves the game without GC and returns a string containing the Blakserv save game time.">
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Send" func="yes">
+         <Overload retVal="retval" descr="Control passes to this message. Can also accept a kod string containing a message name instead of @Message, and a built-in object constant instead of an object.">
+            <Param name="object"/>
+            <Param name="message"/>
+            <Param name="params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SendCopyPacket" func="yes">
+         <Overload retVal="$">
+            <Param name="session"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SendList" func="yes">
+         <Overload retVal="int" descr="Calls the message on each object in the list.&#x0a;Position 0 indicates the objects are in list, pos 1 &#x0a;sends to First(list), etc.&#x0a;Can also accept a kod string containing a message name ,&#x0a;instead of @Message and a built-in object constant instead of an object.">
+            <Param name="list"/>
+            <Param name="int list_position"/>
+            <Param name="message"/>
+            <Param name="message params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SendListBreak" func="yes">
+         <Overload retVal="int" descr="Calls the message on each object in the list, \nbut will stop calling and return false if any called message returns false.\nPosition 0 indicates the objects are in list, pos 1 sends to First(list), etc.\nCan also accept a kod string containing a message name instead of @Message,\nand a built-in object constant instead of an object.">
+            <Param name="list"/>
+            <Param name="int list_position"/>
+            <Param name="message"/>
+            <Param name="message params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SendListByClass" func="yes">
+         <Overload retVal="int" descr="Calls the message on each object in the\nlist matching the given class. Position 0 indicates the objects are in list, pos 1 sends\nto First(list), etc. Can also accept a kod string containing a message name instead of\n@Message, and a built-in object constant instead of an object.">
+            <Param name="list"/>
+            <Param name="int list_position"/>
+            <Param name="class"/>
+            <Param name="message"/>
+            <Param name="message params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SendListByClassBreak" func="yes">
+         <Overload retVal="int" descr="Calls the message on each object in the list matching the given class. Stops calling and returns false if any called message returns false. Position 0 indicates the objects are in list, pos 1 sends to First(list), etc. Can also accept a kod string containing a message name instead of @Message, and a built-in object constant instead of an object.">
+            <Param name="list"/>
+            <Param name="int list_position"/>
+            <Param name="class"/>
+            <Param name="message"/>
+            <Param name="message params"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SendPacket" func="yes">
+         <Overload retVal="$">
+            <Param name="session"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SetClassVar" func="yes">
+         <Overload retVal="boolean" descr="Sets the classvar to the given data value. Classvar remains set until system is reloaded from file.">
+            <Param name="class"/>
+            <Param name="debug_string classvar_name"/>
+            <Param name="data"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SetFirst" func="yes">
+         <Overload retVal="$">
+            <Param name="list"/>
+            <Param name="data"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SetNth" func="yes">
+         <Overload retVal="$" descr="Use SetFirst(list,data) instead of SetNth(list,1,data).">
+            <Param name="list"/>
+            <Param name="int list_position"/>
+            <Param name="data"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SetResource" func="yes">
+         <Overload retVal="$" descr="Sets a dynamic resource to the string value of a resource, a kod string or the temp string.">
+            <Param name="dynamic_resource"/>
+            <Param name="string"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SetString" func="yes">
+         <Overload retVal="string" descr="Sets string1 to the string value of string 2. String1 must be either a kod string (TAG_STRING) or $, in which case a new string is made.">
+            <Param name="string1"/>
+            <Param name="string2"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="Sqrt" func="yes">
+         <Overload retVal="int" descr="Truncates the result to int.">
+            <Param name="int"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="StringConsistsOf" func="yes">
+         <Overload retVal="boolean" descr="Takes any type of string or resource, returns true if all the characters from string1 are present in s2.">
+            <Param name="string1"/>
+            <Param name="string2"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="StringContain" func="yes">
+         <Overload retVal="boolean" descr="Returns true if string1 contains the string value of string2.">
+            <Param name="string1"/>
+            <Param name="string2"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="StringEqual" func="yes">
+         <Overload retVal="boolean" descr="Returns true if string1 is the same as string2.">
+            <Param name="string1"/>
+            <Param name="string2"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="StringLength" func="yes">
+         <Overload retVal="int" descr="Returns $ if the string wasn't found.">
+            <Param name="string"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="StringSubstitute" func="yes">
+         <Overload retVal="boolean" descr="Substitutes the first occurrence of search_string in string with sub_string. Returns $ on error, 1 if substitution occurred, 0 if the string was not found.">
+            <Param name="string"/>
+            <Param name="search_string"/>
+            <Param name="sub_string"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="SwapListElem" func="yes">
+         <Overload retVal="$" descr="Swaps the data in the two locations in the list. Returns $ as the list nodes are all still valid.">
+            <Param name="list"/>
+            <Param name="int list_pos_1"/>
+            <Param name="int list_pos_2"/>
+         </Overload>
+      </KeyWord>
+   </AutoComplete>
+</NotepadPlus>
