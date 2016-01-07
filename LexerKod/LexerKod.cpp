@@ -489,7 +489,7 @@ class LexerKod final : public ILexerWithSubStyles
    WordList keywords2;
    WordList keywords3;
    WordList keywords4;
-   WordList keywords5;
+   WordList constantList;
    WordList markerList;
 
    struct SymbolValue
@@ -558,6 +558,7 @@ public:
    {
       return osKod.DescribeWordListSets();
    }
+   void AddConstants(IDocument *pAccess, int initStyle, LexAccessor styler);
    int SCI_METHOD WordListSet(int n, const char *wl);
    void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
    void SCI_METHOD Fold(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
@@ -633,6 +634,37 @@ int SCI_METHOD LexerKod::PropertySet(const char *key, const char *val)
    return -1;
 }
 
+bool IsConstantLine(StyleContext &sc, LexAccessor &styler, char *word)
+{
+   // Don't look at styles, so no need to flush.
+   int pos = (int)sc.currentPos;
+   int currentLine = styler.GetLine(pos);
+   int lineStartPos = styler.LineStart(currentLine);
+   int lineEndPos = styler.LineEnd(currentLine);
+
+   if (sc.ch == '\n')
+      return false;
+   int wordpos = 0;
+   for (int i = lineStartPos; i < lineEndPos; ++i)
+   {
+      char ch = styler.SafeGetCharAt(i, '\n');
+      if (ch == '//' || ch == '%' || ch == '\n')
+         return false;
+      if (ch == ' ' || ch == '\t' || ch == '\r')
+         continue;
+      if (ch == '=')
+      {
+         word[wordpos] = ' ';
+         word[wordpos + 1] = 0;
+         return true;
+      }
+      word[wordpos] = ch;
+      ++wordpos;
+   }
+
+   return false;
+}
+
 int SCI_METHOD LexerKod::WordListSet(int n, const char *wl)
 {
    WordList *wordListN = 0;
@@ -651,7 +683,7 @@ int SCI_METHOD LexerKod::WordListSet(int n, const char *wl)
       wordListN = &keywords4;
       break;
    case 4:
-      wordListN = &keywords5;
+      wordListN = &constantList;
       break;
    case 5:
       wordListN = &markerList;
@@ -666,40 +698,6 @@ int SCI_METHOD LexerKod::WordListSet(int n, const char *wl)
       {
          wordListN->Set(wl);
          firstModification = 0;
-         if (n == 4)
-         {
-            // Rebuild preprocessorDefinitions
-            preprocessorDefinitionsStart.clear();
-            for (int nDefinition = 0; nDefinition < keywords5.Length(); nDefinition++)
-            {
-               const char *cpDefinition = keywords5.WordAt(nDefinition);
-               const char *cpEquals = strchr(cpDefinition, '=');
-               if (cpEquals)
-               {
-                  std::string name(cpDefinition, cpEquals - cpDefinition);
-                  std::string val(cpEquals + 1);
-                  size_t bracket = name.find('(');
-                  size_t bracketEnd = name.find(')');
-                  if ((bracket != std::string::npos) && (bracketEnd != std::string::npos))
-                  {
-                     // Macro
-                     std::string args = name.substr(bracket + 1, bracketEnd - bracket - 1);
-                     name = name.substr(0, bracket);
-                     preprocessorDefinitionsStart[name] = SymbolValue(val, args);
-                  }
-                  else
-                  {
-                     preprocessorDefinitionsStart[name] = val;
-                  }
-               }
-               else
-               {
-                  std::string name(cpDefinition);
-                  std::string val("1");
-                  preprocessorDefinitionsStart[name] = val;
-               }
-            }
-         }
       }
    }
    return firstModification;
@@ -719,6 +717,38 @@ struct After
 #pragma endregion
 
 #pragma region Lex And Fold
+
+void LexerKod::AddConstants(IDocument *pAccess, int initStyle, LexAccessor styler)
+{
+   StyleContext sc1(0, pAccess->Length(), initStyle, styler, static_cast<unsigned char>(0xff));
+   std::string constantWords;
+   char constantWord[256];
+   constantWord[255] = 0;
+   char *cList = constantWord;
+   int lineConstantsStart = 0;
+   int lineConstantsEnd = 0;
+   for (; sc1.More();)
+   {
+      if (!lineConstantsStart && sc1.Match("constants:"))
+      {
+         lineConstantsStart = styler.GetLine(sc1.currentPos);
+      }
+      else if ((sc1.Match("resources:")
+         || sc1.Match("classvars:") || sc1.Match("properties:") || sc1.Match("messages:")))
+      {
+         if (lineConstantsStart && !lineConstantsEnd)
+            lineConstantsEnd = styler.GetLine(sc1.currentPos);
+         break;
+      }
+      else if (lineConstantsStart && sc1.ch == '=' && IsConstantLine(sc1, styler, cList))
+      {
+         constantWords.append(cList);
+      }
+
+      sc1.Forward();
+   }
+   WordListSet(4, constantWords.c_str());
+}
 
 void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess)
 {
@@ -768,6 +798,9 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
       if (MaskActive(styler.StyleAt(back)) == SCE_KOD_OPERATOR)
          chPrevNonWhite = styler.SafeGetCharAt(back);
    }
+
+   // Check constants
+   AddConstants(pAccess, initStyle, styler);
 
    StyleContext sc(startPos, length, initStyle, styler, static_cast<unsigned char>(0xff));
    LinePPState preproc = vlls.ForLine(lineCurrent);
@@ -915,7 +948,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
             {
                sc.ChangeState(SCE_KOD_WORDOPS | activitySet);
             }
-            else if (keywords5.InList(s))
+            else if (constantList.InList(s))
             {
                sc.ChangeState(SCE_KOD_CONSTANT | activitySet);
             }
