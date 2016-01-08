@@ -17,6 +17,10 @@
 
 #include "LexerKod.h"
 
+extern HWND g_NppWindow;
+
+using namespace std;
+
 // Use an unnamed namespace to protect these functions and classes from name conflicts.
 namespace {
 
@@ -490,7 +494,16 @@ class LexerKod final : public ILexerWithSubStyles
    WordList keywords3;
    WordList keywords4;
    WordList constantList;
+   string constIncludeList;
    WordList markerList;
+
+   struct IncludeFile
+   {
+      ULARGE_INTEGER writeTime;
+      string constants;
+   };
+
+   std::map<std::wstring, IncludeFile> includeFiles;
 
    struct SymbolValue
    {
@@ -558,6 +571,7 @@ public:
    {
       return osKod.DescribeWordListSets();
    }
+   std::string ParseIncludeFile(char *file);
    void AddConstants(IDocument *pAccess, int initStyle, LexAccessor styler);
    int SCI_METHOD WordListSet(int n, const char *wl);
    void SCI_METHOD Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess);
@@ -636,7 +650,6 @@ int SCI_METHOD LexerKod::PropertySet(const char *key, const char *val)
 
 bool IsConstantLine(StyleContext &sc, LexAccessor &styler, char *word)
 {
-   // Don't look at styles, so no need to flush.
    int pos = (int)sc.currentPos;
    int currentLine = styler.GetLine(pos);
    int lineStartPos = styler.LineStart(currentLine);
@@ -648,7 +661,7 @@ bool IsConstantLine(StyleContext &sc, LexAccessor &styler, char *word)
    for (int i = lineStartPos; i < lineEndPos; ++i)
    {
       char ch = styler.SafeGetCharAt(i, '\n');
-      if (ch == '//' || ch == '%' || ch == '\n')
+      if ((ch == '//' && styler.SafeGetCharAt(i + 1, '\n') == '//') || ch == '%' || ch == '\n')
          return false;
       if (ch == ' ' || ch == '\t' || ch == '\r')
          continue;
@@ -718,18 +731,179 @@ struct After
 
 #pragma region Lex And Fold
 
+void AdvanceToCommentClose(StyleContext sc)
+{
+   while (sc.More() && !sc.Match("*/"))
+   {
+      if (sc.Match("/*"))
+      {
+         sc.Forward();
+         AdvanceToCommentClose(sc);
+      }
+      sc.Forward();
+   }
+}
+
+/*
+ * ParseIncludeFile: Parse an include file and append constants to string.
+ *   file is just the name of the include file, ParseIncludeFile has to find
+ *   and open it.
+ */
+std::string LexerKod::ParseIncludeFile(char *file)
+{
+   IncludeFile includeFile;
+   FILE *fp;
+   wchar_t fullPath[MAX_PATH + 1];    // Current dir path + include file.
+   wchar_t currentPath[MAX_PATH + 1]; // Current dir path.
+   wchar_t kodPath[MAX_PATH + 1];     // Used to build kod\include path.
+   char line[1024];
+   std::wstring wcFile;
+   wchar_t wcFileArray[MAX_PATH];
+
+   mbstowcs(wcFileArray, file, MAX_PATH);
+   wcFile.assign(wcFileArray);
+
+   SendMessage(g_NppWindow, NPPM_GETCURRENTDIRECTORY, MAX_PATH, (LPARAM)currentPath);
+   currentPath[MAX_PATH] = 0;
+   wcsncpy(fullPath, currentPath, MAX_PATH + 1);
+   fullPath[MAX_PATH] = 0;
+   PathAppend(fullPath, wcFile.c_str());
+
+   // Map element used for comparison, also where we'll store the strings
+   // after parsing the file, as it'll either be a pointer to the existing
+   // mapped entry or the returned new one.
+   std::pair<std::map<std::wstring, IncludeFile>::iterator, bool> insertElement;
+
+   WIN32_FILE_ATTRIBUTE_DATA  wfad;
+   BOOL fileResult = 0;
+
+   if (!(fp = _tfopen(fullPath, (L"r"))))
+   {
+      // Try include directory
+      wchar_t *strToken;
+      strToken = wcstok(currentPath, L"\\");
+      if (!strToken)
+         return includeFile.constants;
+
+      while (strToken)
+      {
+         PathAppend(kodPath, strToken);
+         if (!wcscmp(strToken, L"kod"))
+         {
+            PathAppend(kodPath, L"include");
+            PathAppend(kodPath, wcFile.c_str());
+            break;
+         }
+         strToken = wcstok(NULL, L"\\");
+      }
+      if (!kodPath || !strToken || (!(fp = _tfopen(kodPath, (L"r")))))
+         return includeFile.constants;
+      // Get file attributes to compare file write time to stored.
+      fileResult = GetFileAttributesEx(kodPath, GetFileExInfoStandard, &wfad);
+   }
+   else
+   {
+      // Get file attributes to compare file write time to stored.
+      fileResult = GetFileAttributesEx(fullPath, GetFileExInfoStandard, &wfad);
+   }
+
+   if (fileResult)
+   {
+      ULARGE_INTEGER lastWrite;
+      lastWrite.HighPart = wfad.ftLastWriteTime.dwHighDateTime;
+      lastWrite.LowPart = wfad.ftLastWriteTime.dwLowDateTime;
+      includeFile.writeTime = lastWrite;
+
+      insertElement = includeFiles.insert(std::pair<std::wstring, IncludeFile>(wcFile, includeFile));
+      if (!insertElement.second)
+      {
+         if (insertElement.first->second.writeTime.QuadPart == lastWrite.QuadPart)
+         {
+            // Use stored constants.
+            fclose(fp);
+            return insertElement.first->second.constants;
+         }
+         else
+         {
+            // Update write time in insertElement, parse file. Strings stored later.
+            insertElement.first->second.writeTime = lastWrite;
+         }
+      }
+   }
+   else
+   {
+      // Couldn't get file attributes - return empty string.
+      fclose(fp);
+      return includeFile.constants;
+   }
+
+   int commentDepth = 0;
+   int visibleChars = 0;
+   int wordFound = 0;
+   char constWord[1024];
+   int wordpos = 0;
+   while (fgets(line, 1024, fp))
+   {
+      visibleChars = 0;
+      wordFound = false;
+      wordpos = 0;
+      if (line[0] == '\n')
+         continue;
+      for (size_t i = 0; i < strlen(line); ++i)
+      {
+         if (line[i] == '%' || (line[i] == '\\' && i + 1 < strlen(line) && line[i + 1] == '\\'))
+            break;
+         if (line[i] == '\\' && i + 1 < strlen(line) && line[i + 1] == '*')
+            ++commentDepth;
+         else if (line[i] == '*' && i + 1 < strlen(line) && line[i + 1] == '\\' && commentDepth)
+            --commentDepth;
+         else if (!wordFound && !commentDepth && line[i] != ' ' && line[i] != '\t' && line[i] != '=')
+         {
+            constWord[wordpos] = line[i];
+            ++wordpos;
+            ++visibleChars;
+         }
+         else if (line[i] == '=' && visibleChars && !commentDepth && !wordFound)
+         {
+            constWord[wordpos] = ' ';
+            constWord[wordpos + 1] = 0;
+            includeFile.constants.append(constWord);
+            wordFound = true;
+         }
+      }
+   }
+
+   fclose(fp);
+   
+   insertElement.first->second.constants = includeFile.constants;
+   return includeFile.constants;
+}
+
+/*
+ * AddConstants: Build the constantWords word list.
+ */
 void LexerKod::AddConstants(IDocument *pAccess, int initStyle, LexAccessor styler)
 {
    StyleContext sc1(0, pAccess->Length(), initStyle, styler, static_cast<unsigned char>(0xff));
    std::string constantWords;
-   char constantWord[256];
-   constantWord[255] = 0;
-   char *cList = constantWord;
+   char constantWord[256], includeFile[256];
+
    int lineConstantsStart = 0;
    int lineConstantsEnd = 0;
    for (; sc1.More();)
    {
-      if (!lineConstantsStart && sc1.Match("constants:"))
+      if (sc1.ch == '%' || sc1.Match("//"))
+      {
+         while (sc1.ch != '\n')
+            sc1.Forward();
+      }
+      else if (sc1.Match("/*"))
+      {
+         sc1.Forward();
+         AdvanceToCommentClose(sc1);
+         sc1.Forward();
+      }
+      else if (!lineConstantsStart && sc1.Match("constants:"))
       {
          lineConstantsStart = styler.GetLine(sc1.currentPos);
       }
@@ -740,9 +914,28 @@ void LexerKod::AddConstants(IDocument *pAccess, int initStyle, LexAccessor style
             lineConstantsEnd = styler.GetLine(sc1.currentPos);
          break;
       }
-      else if (lineConstantsStart && sc1.ch == '=' && IsConstantLine(sc1, styler, cList))
+      else if (sc1.Match("include "))
       {
-         constantWords.append(cList);
+         sc1.ForwardBytes(8);
+         int filePos = 0;
+         while (sc1.More())
+         {
+            if (sc1.ch == ' ' || sc1.ch == '\t')
+               continue;
+            else if (sc1.ch == '\n')
+            {
+               includeFile[filePos] = 0;
+               break;
+            }
+            includeFile[filePos] = sc1.ch;
+            ++filePos;
+            sc1.Forward();
+         }
+         constantWords.append(ParseIncludeFile(includeFile));
+      }
+      else if (lineConstantsStart && sc1.ch == '=' && IsConstantLine(sc1, styler, constantWord))
+      {
+         constantWords.append(constantWord);
       }
 
       sc1.Forward();

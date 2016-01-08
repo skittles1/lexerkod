@@ -35,4 +35,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 
+#include <iostream>
+#include "Shlwapi.h"
+
 #endif

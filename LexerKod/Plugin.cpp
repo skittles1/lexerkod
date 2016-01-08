@@ -17,9 +17,9 @@
 
 #include "LexerKod.h"
 
-namespace LexerKod {
-
 HWND g_NppWindow = nullptr;
+
+namespace LexerKod {
 
 void About()
 {
