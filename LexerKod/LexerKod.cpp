@@ -273,116 +273,11 @@ bool IsStreamCommentStyle(int style)
 
 #pragma endregion
 
-#pragma region Preprocessor Functions
-
-// TODO: While not used in kod, this section should be repurposed for handling constants.
-
-struct PPDefinition
-{
-   int line;
-   std::string key;
-   std::string value;
-   bool isUndef;
-   std::string arguments;
-   PPDefinition(int line_, const std::string &key_, const std::string &value_, bool isUndef_ = false, std::string arguments_ = "") :
-      line(line_), key(key_), value(value_), isUndef(isUndef_), arguments(arguments_)
-   {
-   }
-};
-
-class LinePPState
-{
-   int state;
-   int ifTaken;
-   int level;
-   bool ValidLevel() const
-   {
-      return level >= 0 && level < 32;
-   }
-   int maskLevel() const
-   {
-      return 1 << level;
-   }
-public:
-   LinePPState() : state(0), ifTaken(0), level(-1)
-   {
-   }
-   bool IsInactive() const
-   {
-      return state != 0;
-   }
-   bool CurrentIfTaken() const
-   {
-      return (ifTaken & maskLevel()) != 0;
-   }
-   void StartSection(bool on)
-   {
-      level++;
-      if (ValidLevel())
-      {
-         if (on)
-         {
-            state &= ~maskLevel();
-            ifTaken |= maskLevel();
-         }
-         else
-         {
-            state |= maskLevel();
-            ifTaken &= ~maskLevel();
-         }
-      }
-   }
-   void EndSection()
-   {
-      if (ValidLevel())
-      {
-         state &= ~maskLevel();
-         ifTaken &= ~maskLevel();
-      }
-      level--;
-   }
-   void InvertCurrentLevel()
-   {
-      if (ValidLevel())
-      {
-         state ^= maskLevel();
-         ifTaken |= maskLevel();
-      }
-   }
-};
-
-// Hold the preprocessor state for each line seen.
-// Currently one entry per line but could become sparse with just one entry per preprocessor line.
-class PPStates
-{
-   std::vector<LinePPState> vlls;
-public:
-   LinePPState ForLine(int line) const
-   {
-      if ((line > 0) && (vlls.size() > static_cast<size_t>(line)))
-      {
-         return vlls[line];
-      }
-      else
-      {
-         return LinePPState();
-      }
-   }
-   void Add(int line, LinePPState lls)
-   {
-      vlls.resize(line + 1);
-      vlls[line] = lls;
-   }
-};
-
-#pragma endregion
-
 #pragma region Options
 
 // Options used for LexerKod
 struct OptionsKod
 {
-   bool updatePreprocessor;
    bool backQuotedStrings;
    bool escapeSequence;
    bool fold;
@@ -399,7 +294,6 @@ struct OptionsKod
 
    OptionsKod()
    {
-      updatePreprocessor = true;
       escapeSequence = false;
       fold = true;
       foldSyntaxBased = true;
@@ -428,9 +322,6 @@ const char *const kodWordLists[] =
 
 struct OptionSetKod : public OptionSet<OptionsKod> {
    OptionSetKod() {
-      DefineProperty("lexer.kod.update.preprocessor", &OptionsKod::updatePreprocessor,
-         "Set to 1 to update preprocessor definitions when #define found.");
-
       DefineProperty("lexer.kod.escape.sequence", &OptionsKod::escapeSequence,
          "Set to 1 to enable highlighting of escape sequences in strings");
 
@@ -487,8 +378,6 @@ class LexerKod final : public ILexerWithSubStyles
    CharacterSet setArithmethicOp;
    CharacterSet setRelOp;
    CharacterSet setWordStart;
-   PPStates vlls;
-   std::vector<PPDefinition> ppDefineHistory;
    WordList keywords;
    WordList keywords2;
    WordList keywords3;
@@ -505,26 +394,6 @@ class LexerKod final : public ILexerWithSubStyles
 
    std::map<std::wstring, IncludeFile> includeFiles;
 
-   struct SymbolValue
-   {
-      std::string value;
-      std::string arguments;
-      SymbolValue(const std::string &value_ = "", const std::string &arguments_ = "") : value(value_), arguments(arguments_)
-      {
-      }
-      SymbolValue &operator = (const std::string &value_)
-      {
-         value = value_;
-         arguments.clear();
-         return *this;
-      }
-      bool IsMacro() const
-      {
-         return !arguments.empty();
-      }
-   };
-   typedef std::map<std::string, SymbolValue> SymbolTable;
-   SymbolTable preprocessorDefinitionsStart;
    OptionsKod options;
    OptionSetKod osKod;
    EscapeSequence escapeSeq;
@@ -715,17 +584,6 @@ int SCI_METHOD LexerKod::WordListSet(int n, const char *wl)
    }
    return firstModification;
 }
-
-// Functor used to truncate history
-struct After
-{
-   int line;
-   explicit After(int line_) : line(line_) {}
-   bool operator()(PPDefinition &p) const
-   {
-      return p.line > line;
-   }
-};
 
 #pragma endregion
 
@@ -961,9 +819,6 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
    int styleBeforeDCKeyword = SCE_KOD_DEFAULT;
    int styleBeforeTaskMarker = SCE_KOD_DEFAULT;
    bool continuationLine = false;
-   bool isIncludePreprocessor = false;
-   bool isStringInPreprocessor = false;
-   bool inRERange = false;
    bool seenDocKeyBrace = false;
 
    int lineCurrent = styler.GetLine(startPos);
@@ -996,35 +851,11 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
    AddConstants(pAccess, initStyle, styler);
 
    StyleContext sc(startPos, length, initStyle, styler, static_cast<unsigned char>(0xff));
-   LinePPState preproc = vlls.ForLine(lineCurrent);
-
-   bool definitionsChanged = false;
-
-   // Truncate ppDefineHistory before current line
-
-   if (!options.updatePreprocessor)
-      ppDefineHistory.clear();
-
-   std::vector<PPDefinition>::iterator itInvalid = std::find_if(ppDefineHistory.begin(), ppDefineHistory.end(), After(lineCurrent - 1));
-   if (itInvalid != ppDefineHistory.end())
-   {
-      ppDefineHistory.erase(itInvalid, ppDefineHistory.end());
-      definitionsChanged = true;
-   }
-
-   SymbolTable preprocessorDefinitions = preprocessorDefinitionsStart;
-   for (std::vector<PPDefinition>::iterator itDef = ppDefineHistory.begin(); itDef != ppDefineHistory.end(); ++itDef)
-   {
-      if (itDef->isUndef)
-         preprocessorDefinitions.erase(itDef->key);
-      else
-         preprocessorDefinitions[itDef->key] = SymbolValue(itDef->value, itDef->arguments);
-   }
 
    std::string rawStringTerminator = rawStringTerminators.ValueAt(lineCurrent - 1);
    SparseState<std::string> rawSTNew(lineCurrent);
 
-   int activitySet = preproc.IsInactive() ? activeFlag : 0;
+   int activitySet = 0;
 
    const WordClassifier &classifierIdentifiers = subStyles.Classifier(SCE_KOD_IDENTIFIER);
    const WordClassifier &classifierDocKeyWords = subStyles.Classifier(SCE_KOD_COMMENTDOCKEYWORD);
@@ -1048,13 +879,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          // Reset states to beginning of colourise so no surprises
          // if different sets of lines lexed.
          visibleChars = 0;
-         isIncludePreprocessor = false;
-         inRERange = false;
-         if (preproc.IsInactive())
-         {
-            activitySet = activeFlag;
-            sc.SetState(sc.state | activitySet);
-         }
+
          lineCurrent = styler.GetLine(sc.currentPos);
          styler.SetLineState(lineCurrent, curNcLevel);
       }
@@ -1063,7 +888,6 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
       {
          lineCurrent++;
          lineEndNext = styler.LineEnd(lineCurrent);
-         vlls.Add(lineCurrent, preproc);
 
          if (rawStringTerminator != "")
             rawSTNew.Set(lineCurrent - 1, rawStringTerminator);
@@ -1076,7 +900,6 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          {
             lineCurrent++;
             lineEndNext = styler.LineEnd(lineCurrent);
-            vlls.Add(lineCurrent, preproc);
             sc.Forward();
             if (sc.ch == '\r' && sc.chNext == '\n')
             {
@@ -1364,7 +1187,6 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          // State exit processing consumed characters up to end of line.
          lineCurrent++;
          lineEndNext = styler.LineEnd(lineCurrent);
-         vlls.Add(lineCurrent, preproc);
       }
 
       // Determine if a new state should be entered.
@@ -1433,7 +1255,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
       sc.Forward();
    }
    const bool rawStringsChanged = rawStringTerminators.Merge(rawSTNew, lineCurrent);
-   if (definitionsChanged || rawStringsChanged)
+   if (rawStringsChanged)
       styler.ChangeLexerState(startPos, startPos + length);
    sc.Complete();
 }
