@@ -324,11 +324,11 @@ struct OptionsKod
 
 const char *const kodWordLists[] =
 {
-   "Primary keywords and identifiers",
-   "Secondary keywords and identifiers",
-   "Documentation comment keywords",
-   "Global classes and typedefs",
-   "Preprocessor definitions",
+   "Keywords and identifiers",
+   "C function calls (except message passing)",
+   "Message passing C function calls",
+   "Word operators",
+   "Kod constants",
    "Task marker and error marker keywords",
    0,
 };
@@ -364,8 +364,7 @@ struct OptionSetKod : public OptionSet<OptionsKod> {
          "Set this property to 1 to enable explicit fold points anywhere, not just in line comments.");
 
       DefineProperty("fold.preprocessor", &OptionsKod::foldPreprocessor,
-         "This option enables folding preprocessor directives when using the C++ lexer. "
-         "Includes C#'s explicit #region and #endregion folding directives.");
+         "Enables #region/#endregion folding.");
 
       DefineProperty("fold.compact", &OptionsKod::foldCompact);
 
