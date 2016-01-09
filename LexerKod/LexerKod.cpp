@@ -271,6 +271,19 @@ bool IsStreamCommentStyle(int style)
       style == SCE_KOD_COMMENTDOCKEYWORDERROR;
 }
 
+void AdvanceToCommentClose(StyleContext sc)
+{
+   while (sc.More() && !sc.Match("*/"))
+   {
+      if (sc.Match("/*"))
+      {
+         sc.Forward();
+         AdvanceToCommentClose(sc);
+      }
+      sc.Forward();
+   }
+}
+
 #pragma endregion
 
 #pragma region Options
@@ -587,20 +600,7 @@ int SCI_METHOD LexerKod::WordListSet(int n, const char *wl)
 
 #pragma endregion
 
-#pragma region Lex And Fold
-
-void AdvanceToCommentClose(StyleContext sc)
-{
-   while (sc.More() && !sc.Match("*/"))
-   {
-      if (sc.Match("/*"))
-      {
-         sc.Forward();
-         AdvanceToCommentClose(sc);
-      }
-      sc.Forward();
-   }
-}
+#pragma region Kod Constants
 
 /*
  * ParseIncludeFile: Parse an include file and append constants to string.
@@ -732,7 +732,7 @@ std::string LexerKod::ParseIncludeFile(char *file)
    }
 
    fclose(fp);
-   
+
    insertElement.first->second.constants = includeFile.constants;
    return includeFile.constants;
 }
@@ -800,6 +800,10 @@ void LexerKod::AddConstants(IDocument *pAccess, int initStyle, LexAccessor style
    }
    WordListSet(4, constantWords.c_str());
 }
+
+#pragma endregion
+
+#pragma region Lex And Fold
 
 void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, IDocument *pAccess)
 {
