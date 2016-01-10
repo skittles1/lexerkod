@@ -401,10 +401,25 @@ class LexerKod final : public ILexerWithSubStyles
    struct IncludeFile
    {
       ULARGE_INTEGER writeTime;
-      string constants;
+      std::string constants;
+      IncludeFile(const ULARGE_INTEGER &writeTime_, const std::string &constants_ = "") : writeTime(writeTime_), constants(constants_)
+      {
+      }
+      IncludeFile &operator = (const std::string &constants_)
+      {
+         constants = constants_;
+         //constants.clear();
+         return *this;
+      }
+      IncludeFile &operator = (const ULARGE_INTEGER &writeTime_)
+      {
+         writeTime = writeTime_;
+         return *this;
+      }
    };
 
-   std::map<std::wstring, IncludeFile> includeFiles;
+   typedef std::map<std::string, IncludeFile> IncludeFiles;
+   IncludeFiles includeFiles;
 
    OptionsKod options;
    OptionSetKod osKod;
@@ -514,9 +529,6 @@ public:
    {
       return style & ~activeFlag;
    }
-   //void EvaluateTokens(std::vector<std::string> &tokens, const SymbolTable &preprocessorDefinitions);
-   //std::vector<std::string> Tokenize(const std::string &expr) const;
-   //bool EvaluateExpression(const std::string &expr, const SymbolTable &preprocessorDefinitions);
 };
 
 int SCI_METHOD LexerKod::PropertySet(const char *key, const char *val)
@@ -602,98 +614,123 @@ int SCI_METHOD LexerKod::WordListSet(int n, const char *wl)
 #pragma region Kod Constants
 
 /*
+ * GetCurrentKodFilePath: Puts the current kod file path into the passed char pointer.
+ *   Calling function should ensure enough space is available, MAX_PATH + 1.
+ */
+bool GetCurrentKodFilePath(char *path)
+{
+   wchar_t wcCurrentPath[MAX_PATH + 1]; // Current dir path, wide char.
+   // Get directory of opened file.
+   SendMessage(g_NppWindow, NPPM_GETCURRENTDIRECTORY, MAX_PATH, (LPARAM)wcCurrentPath);
+   // Zero terminate for safety, and convert to char.
+   wcCurrentPath[MAX_PATH] = 0;
+   wcstombs(path, wcCurrentPath, MAX_PATH + 1);
+   if (!strcmp(path, "") || strlen(path) <= 1)
+      return false;
+   return true;
+}
+
+/*
  * ParseIncludeFile: Parse an include file and append constants to string.
  *   file is just the name of the include file, ParseIncludeFile has to find
  *   and open it.
  */
 std::string LexerKod::ParseIncludeFile(char *file)
 {
-   IncludeFile includeFile;
    FILE *fp;
-   wchar_t fullPath[MAX_PATH + 1];    // Current dir path + include file.
-   wchar_t currentPath[MAX_PATH + 1]; // Current dir path.
-   wchar_t kodPath[MAX_PATH + 1];     // Used to build kod\include path.
+   char fullPath[MAX_PATH + 1];         // Current dir path + include file.
+   char currentPath[MAX_PATH + 1];      // Current dir path, char.
+   char kodPath[MAX_PATH + 1];          // Used to build kod\include path.
    char line[1024];
-   std::wstring wcFile;
-   wchar_t wcFileArray[MAX_PATH];
 
-   mbstowcs(wcFileArray, file, MAX_PATH);
-   wcFile.assign(wcFileArray);
+   // Obtain the current kod file path.
+   // BUG (in Notepad++): Notepad++ won't return the correct current path
+   // for this file if it was already open when Notepad++ was started.
+   // As soon as any action is taken, the path will be correctly returned.
+   if (!GetCurrentKodFilePath(currentPath))
+      return "";
 
-   SendMessage(g_NppWindow, NPPM_GETCURRENTDIRECTORY, MAX_PATH, (LPARAM)currentPath);
-   currentPath[MAX_PATH] = 0;
-   wcsncpy(fullPath, currentPath, MAX_PATH + 1);
+   // Copy to fullpath, zero terminate for safety.
+   strcpy(fullPath, currentPath);
    fullPath[MAX_PATH] = 0;
-   PathAppend(fullPath, wcFile.c_str());
+
+   // Append include filename.
+   PathAppendA(fullPath, file);
 
    // Map element used for comparison, also where we'll store the strings
    // after parsing the file, as it'll either be a pointer to the existing
    // mapped entry or the returned new one.
-   std::pair<std::map<std::wstring, IncludeFile>::iterator, bool> insertElement;
+   std::pair<std::map<std::string, IncludeFile>::iterator, bool> insertElement;
 
+   // Structure for getting file write time.
    WIN32_FILE_ATTRIBUTE_DATA  wfad;
    BOOL fileResult = 0;
 
-   if (!(fp = _tfopen(fullPath, (L"r"))))
+   // First attempt to open include file in the current directory.
+   if (!(fp = fopen(fullPath, "r")))
    {
-      // Try include directory
-      wchar_t *strToken;
-      strToken = wcstok(currentPath, L"\\");
+      // If that fails, try standard kod include directory \kod\include.
+      char *strToken;
+      strToken = strtok(currentPath, "\\");
       if (!strToken)
-         return includeFile.constants;
+         return "";
 
       while (strToken)
       {
-         PathAppend(kodPath, strToken);
-         if (!wcscmp(strToken, L"kod"))
+         PathAppendA(kodPath, strToken);
+         if (!strcmp(strToken, "kod"))
          {
-            PathAppend(kodPath, L"include");
-            PathAppend(kodPath, wcFile.c_str());
+            PathAppendA(kodPath, "include");
+            PathAppendA(kodPath, file);
             break;
          }
-         strToken = wcstok(NULL, L"\\");
+         strToken = strtok(NULL, "\\");
       }
-      if (!kodPath || !strToken || (!(fp = _tfopen(kodPath, (L"r")))))
-         return includeFile.constants;
+
+      if (!kodPath || !strToken || (!(fp = fopen(kodPath, "r"))))
+         return "";
       // Get file attributes to compare file write time to stored.
-      fileResult = GetFileAttributesEx(kodPath, GetFileExInfoStandard, &wfad);
+      fileResult = GetFileAttributesExA(kodPath, GetFileExInfoStandard, &wfad);
    }
    else
    {
       // Get file attributes to compare file write time to stored.
-      fileResult = GetFileAttributesEx(fullPath, GetFileExInfoStandard, &wfad);
+      fileResult = GetFileAttributesExA(fullPath, GetFileExInfoStandard, &wfad);
    }
 
-   if (fileResult)
-   {
-      ULARGE_INTEGER lastWrite;
-      lastWrite.HighPart = wfad.ftLastWriteTime.dwHighDateTime;
-      lastWrite.LowPart = wfad.ftLastWriteTime.dwLowDateTime;
-      includeFile.writeTime = lastWrite;
-
-      insertElement = includeFiles.insert(std::pair<std::wstring, IncludeFile>(wcFile, includeFile));
-      if (!insertElement.second)
-      {
-         if (insertElement.first->second.writeTime.QuadPart == lastWrite.QuadPart)
-         {
-            // Use stored constants.
-            fclose(fp);
-            return insertElement.first->second.constants;
-         }
-         else
-         {
-            // Update write time in insertElement, parse file. Strings stored later.
-            insertElement.first->second.writeTime = lastWrite;
-         }
-      }
-   }
-   else
+   if (!fileResult)
    {
       // Couldn't get file attributes - return empty string.
       fclose(fp);
-      return includeFile.constants;
+      return "";
    }
 
+   ULARGE_INTEGER lastWrite;
+   lastWrite.HighPart = wfad.ftLastWriteTime.dwHighDateTime;
+   lastWrite.LowPart = wfad.ftLastWriteTime.dwLowDateTime;
+
+   std::string wcFile;
+   wcFile.assign(file);
+
+   IncludeFile includeFile(lastWrite, "");
+   insertElement = includeFiles.insert(std::pair<std::string, IncludeFile>(wcFile, includeFile));
+   if (!insertElement.second)
+   {
+      if (insertElement.first->second.writeTime.QuadPart == lastWrite.QuadPart)
+      {
+         // Use stored constants.
+         fclose(fp);
+         return insertElement.first->second.constants;
+      }
+      else
+      {
+         // Update write time in insertElement, parse file. Strings stored later.
+         insertElement.first->second.writeTime = lastWrite;
+      }
+   }
+
+   // Parse include file, assume the whole thing is a list of constants.
+   // If valid constant assignments are found, add them to constant string.
    int commentDepth = 0;
    int visibleChars = 0;
    int wordFound = 0;
