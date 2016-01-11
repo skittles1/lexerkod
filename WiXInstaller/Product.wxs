@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+   <Product
+      Id="*"
+      Name="LexerKod"
+      Language="1033"
+      Version="1.0.0.0"
+      Manufacturer="Delerium"
+      UpgradeCode="11f8c9e0-b62c-41a7-8aeb-1692f86755e3">
+      <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+      <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+      <MediaTemplate EmbedCab='yes' />
+      
+      <Property
+         Id="NPPDIR">
+         <RegistrySearch
+            Id='NppRegistry'
+            Type='raw'
+            Root='HKLM'
+            Key='SOFTWARE\Wow6432Node\Notepad++'
+            />
+      </Property>
+
+      <Directory Id="TARGETDIR" Name="SourceDir">
+         <Directory Id="NPPDIR">
+            <Directory Id ="plugins" Name="plugins">
+               <Component Id="LexDll" Guid="B82B6FD08E4B4EF99F4D75E216683CEA">
+                  <File Id="LexDll" KeyPath="yes" Source="$(var.LexerKod.TargetPath)" />
+               </Component>
+               <Directory Id="APIs" Name="APIs">
+                  <Component Id="AutoComplete" Guid="26784B32C432425C9A4B971F3C2E818D">
+                     <File Id="AutoComplete" KeyPath="yes" Source="$(var.LexerKod.ProjectDir)\AutoComplete\kod.xml" />
+                  </Component>
+               </Directory>
+            </Directory>
+         </Directory>
+         <Directory Id="AppDataFolder">
+            <Directory Id="Npp" Name="Notepad++">
+               <Directory Id="AppPlugins" Name="plugins">
+                  <Directory Id="config" Name="config">
+                     <Component Id="LangData" Guid="56CDEB3BE6E24485B003DA74C79B4692">
+                        <File Id="LangData" Source="$(var.LexerKod.ProjectDir)\LangData\LexerKod.xml" />
+                     </Component>
+                  </Directory>
+               </Directory>
+               <Directory Id="themes" Name="themes">
+                  <Component Id="DeepBlack" Guid="A908911DD0C94697B8463659402613B7">
+                     <File Id="DeepBlack" Source="$(var.LexerKod.ProjectDir)\Styles\Deep Black.xml" />
+                  </Component>
+               </Directory>
+            </Directory>
+         </Directory>
+      </Directory>
+
+      <util:CloseApplication
+         Id="CloseApplication"
+         CloseMessage="yes"
+         PromptToContinue="yes"
+         Target="notepad++.exe"
+         Description="Close notepad++ before installing plugin." >
+         </util:CloseApplication>
+
+      <Feature Id="MainApplication" Title="Main Application" Level="1">
+         <ComponentRef Id="LexDll" />
+         <ComponentRef Id="AutoComplete" />
+         <ComponentRef Id="LangData" />
+         <ComponentRef Id="DeepBlack" />
+      </Feature>
+   </Product>
+</Wix>

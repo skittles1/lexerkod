@@ -1,0 +1,41 @@
+<NotepadPlus>
+    <Languages>
+        <Language name="Kod" ext="kod khd lkod" commentLine="%" commentStart="" commentEnd="">
+            <!-- Keyword type 0: Keywords and identifiers -->
+            <Keywords name="instre1">if else switch case default for foreach do while local return propagate break continue include constants resources classvars properties messages end is self</Keywords>
+            <!-- Keyword type 1: C function calls (except message passing) -->
+            <Keywords name="instre2">Abs AddPacket AddTableEntry AppendListElem AppendTempString BlockerAddBSP BlockerClearBSP BlockerMoveBSP BlockerRemoveBSP Bound CanMoveInRoomBSP ChangeTextureBSP ClearPacket ClearTempString Cons Create CreateString CreateTable CreateTimer Debug DeleteTableEntry DeleteTimer DelListElem DumpStack FindListElem First FreeRoom GetAllListNodesByClass GetClass GetInactiveTime GetListElemByClass GetListNode GetLocationInfoBSP GetRandomPointBSP GetSessionIP GetStepTowardsBSP GetTableEntry GetTempString GetTickCount GetTime GetTimeRemaining GetTimeZoneOffset GodLog InsertListElem IsClass IsList IsListMatch IsObject IsString IsTable IsTimer Last Length LineOfSightBSP LineOfSightView ListCopy LoadGame LoadRoom MiniGameNumberToString MiniGameStringToNumber MoveSectorBSP Nth ParseString Random RecordStat RecycleUser Rest RoomData SaveGame SendCopyPacket SendPacket SetClassVar SetFirst SetNth SetResource SetString Sqrt StringConsistsOf StringContain StringEqual StringLength StringSubstitute SwapListElem</Keywords>
+            <!-- Keyword type 2: Message passing C function calls -->
+            <Keywords name="type1">Post Send SendList SendListBreak SendListByClass SendListByClassBreak</Keywords>
+            <!-- Keyword type 3: Word operators -->
+            <Keywords name="type2">AND OR NOT MOD</Keywords>
+            <!-- Keyword type 4: Constants -->
+            <Keywords name="type3" />
+            <!-- Keyword type 5: Task marker and error marker keywords -->
+            <Keywords name="type4" />
+        </Language>
+    </Languages>
+    <LexerStyles>
+        <LexerType name="Kod" desc="Kod" ext="kod khd lkod" excluded="no">
+            <WordsStyle name="DEFAULT" styleID="0" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="IDENTIFIER" styleID="1" fgColor="000000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="NUMBER" styleID="2" fgColor="FF8000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="OPERATOR" styleID="3" fgColor="0066AA" bgColor="FFFFFF" fontName="" fontStyle="1" fontSize="" />
+            <WordsStyle name="STRING" styleID="4" fgColor="808080" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="PREPROCESSOR" styleID="5" fgColor="804000" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="KEYWORDS" styleID="6" fgColor="0000FF" bgColor="FFFFFF" fontName="" fontStyle="1" fontSize="" keywordClass="instre1" />
+            <WordsStyle name="C CALLS" styleID="7" fgColor="8000FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" keywordClass="instre2" />
+            <WordsStyle name="SENDMSG" styleID="8" fgColor="8000FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" keywordClass="type1" />
+            <WordsStyle name="WORD OPERATORS" styleID="9" fgColor="000080" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" keywordClass="type2" />
+            <WordsStyle name="MESSAGE" styleID="10" fgColor="0080C0" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="CLASS" styleID="11" fgColor="8080FF" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="CONSTANT" styleID="12" fgColor="FF33CC" bgColor="FFFFFF" fontName="" fontStyle="0" fontSize="" keywordClass="type3" />
+            <WordsStyle name="COMMENT" styleID="15" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="2" fontSize="" />
+            <WordsStyle name="COMMENT LINE" styleID="16" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="2" fontSize="" />
+            <WordsStyle name="COMMENT DOC" styleID="17" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="2" fontSize="" />
+            <WordsStyle name="COMMENT LINE DOC" styleID="18" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="2" fontSize="" />
+            <WordsStyle name="COMMENT DOC KEYWORD" styleID="19" fgColor="008000" bgColor="FFFFFF" fontName="" fontStyle="2" fontSize="" />
+            <WordsStyle name="COMMENT DOC KEYWORD ERROR" styleID="20" fgColor="008080" bgColor="FFFFFF" fontName="" fontStyle="2" fontSize="" />
+        </LexerType>
+    </LexerStyles>
+</NotepadPlus>

@@ -1,0 +1,23 @@
+<LexerStyles>
+  <LexerType name="Kod" desc="Kod" ext="kod khd lkod" excluded="no">
+      <WordsStyle name="DEFAULT" styleID="0" fgColor="FFFFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+      <WordsStyle name="IDENTIFIER" styleID="1" fgColor="FFFFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+      <WordsStyle name="NUMBER" styleID="2" fgColor="73DCFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+      <WordsStyle name="OPERATOR" styleID="3" fgColor="FFCC00" bgColor="000000" fontName="" fontStyle="1" fontSize="" />
+      <WordsStyle name="STRING" styleID="4" fgColor="FFFF20" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+      <WordsStyle name="PREPROCESSOR" styleID="5" fgColor="C0C0C0" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+      <WordsStyle name="KEYWORDS" styleID="6" fgColor="FF7700" bgColor="000000" fontName="" fontStyle="1" fontSize="" keywordClass="instre1" />
+      <WordsStyle name="C CALLS" styleID="7" fgColor="00FFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" keywordClass="instre2" />
+      <WordsStyle name="SENDMSG" styleID="8" fgColor="00FFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" keywordClass="type1" />
+      <WordsStyle name="WORD OPERATORS" styleID="9" fgColor="FFCC00" bgColor="000000" fontName="" fontStyle="0" fontSize="" keywordClass="type2" />
+      <WordsStyle name="MESSAGE" styleID="10" fgColor="CFFFBF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+      <WordsStyle name="CLASS" styleID="11" fgColor="BFCFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+      <WordsStyle name="CONSTANT" styleID="12" fgColor="D057BE" bgColor="000000" fontName="" fontStyle="0" fontSize="" keywordClass="type3" />
+      <WordsStyle name="COMMENT" styleID="15" fgColor="009900" bgColor="000000" fontName="" fontStyle="2" fontSize="" />
+      <WordsStyle name="COMMENT LINE" styleID="16" fgColor="009900" bgColor="000000" fontName="" fontStyle="2" fontSize="" />
+      <WordsStyle name="COMMENT DOC" styleID="17" fgColor="009900" bgColor="000000" fontName="" fontStyle="2" fontSize="" />
+      <WordsStyle name="COMMENT LINE DOC" styleID="18" fgColor="009900" bgColor="000000" fontName="" fontStyle="2" fontSize="" />
+      <WordsStyle name="COMMENT DOC KEYWORD" styleID="19" fgColor="009900" bgColor="000000" fontName="" fontStyle="2" fontSize="" />
+      <WordsStyle name="COMMENT DOC KEYWORD ERROR" styleID="20" fgColor="00BB00" bgColor="000000" fontName="" fontStyle="2" fontSize="" />
+  </LexerType>
+</LexerStyles>
