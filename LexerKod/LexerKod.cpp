@@ -82,7 +82,6 @@ bool IsRegionLine(StyleContext &sc, LexAccessor &styler)
    // Don't look at styles, so no need to flush.
    int pos = (int)sc.currentPos;
    int currentLine = styler.GetLine(pos);
-   int lineStartPos = styler.LineStart(currentLine);
    int lineEndPos = styler.LineEnd(currentLine);
 
    if (sc.Match("#region"))
@@ -102,6 +101,27 @@ bool IsRegionLine(StyleContext &sc, LexAccessor &styler)
    }
 
    return true;
+}
+
+bool IsParameter(StyleContext &sc, LexAccessor &styler)
+{
+   // Don't look at styles, so no need to flush.
+   int pos = (int)sc.currentPos;
+   int currentLine = styler.GetLine(pos);
+   int lineStartPos = styler.LineStart(currentLine);
+   int lineEndPos = styler.LineEnd(currentLine);
+
+   while (++pos < lineEndPos)
+   {
+      char ch = styler.SafeGetCharAt(pos, '\n');
+      if (ch == '#' || ch == '\n' || ch == ';' || ch == ')'
+         || ch == '(' || ch == '%' || ch == '\\' || ch == '*')
+         return false;
+      if (ch == '=')
+         return true;
+   }
+
+   return false;
 }
 
 bool IsSpaceOrTab(int ch)
@@ -1208,6 +1228,12 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
             sc.SetState(SCE_KOD_DEFAULT | activitySet);
          }
          break;
+      case SCE_KOD_PARAMETER:
+         if (sc.ch == '=')
+         {
+            sc.SetState(SCE_KOD_DEFAULT | activitySet);
+         }
+         break;
       case SCE_KOD_STRINGEOL:
          if (sc.atLineStart)
          {
@@ -1283,6 +1309,11 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          {
             // Preprocessor commands are alone on their line
             sc.SetState(SCE_KOD_PREPROCESSOR | activitySet);
+         }
+         else if (sc.ch == '#' && IsParameter(sc, styler))
+         {
+            // Parameter colors from = to the end of the parameter word.
+            sc.SetState(SCE_KOD_PARAMETER | activitySet);
          }
       }
 

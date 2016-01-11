@@ -13,6 +13,7 @@
       <WordsStyle name="MESSAGE" styleID="10" fgColor="CFFFBF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
       <WordsStyle name="CLASS" styleID="11" fgColor="BFCFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
       <WordsStyle name="CONSTANT" styleID="12" fgColor="D057BE" bgColor="000000" fontName="" fontStyle="0" fontSize="" keywordClass="type3" />
+      <WordsStyle name="PARAMETER" styleID="13" fgColor="00FF00" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
       <WordsStyle name="COMMENT" styleID="15" fgColor="009900" bgColor="000000" fontName="" fontStyle="2" fontSize="" />
       <WordsStyle name="COMMENT LINE" styleID="16" fgColor="009900" bgColor="000000" fontName="" fontStyle="2" fontSize="" />
       <WordsStyle name="COMMENT DOC" styleID="17" fgColor="009900" bgColor="000000" fontName="" fontStyle="2" fontSize="" />
