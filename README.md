@@ -4,7 +4,7 @@ LexerKod
 LexerKod is a Notepad++ plugin that adds colorising and folding for
 Blakod (kod), the scripting language used in the MMORPG Meridian 59.
 
-LexerKod includes support for
+LexerKod includes support for:
 * Single line C++ // and kod % style comments
 * Multi-line C-style /* */ comments, nesting allowed
 * Coloring and autocomplete of C calls with parameter hints
@@ -15,6 +15,9 @@ declared in any included constant files
 * Coloring of keywords, numbers, operators and $ symbol
 * #region and #endregion folding
 * Folding at brackets and multi-line comments
+
+As of v1.03 the only themes available are the default (white background)
+and Notepad++ Deep Black themes.
 
 Download Plugin
 --------------
