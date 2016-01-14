@@ -8,3 +8,6 @@ Release
 *.suo
 *.txt
 *.user
+*.wxs
+/packages
+*.config
