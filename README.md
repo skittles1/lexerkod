@@ -23,6 +23,8 @@ Download Plugin
 --------------
 You can obtain the plugin at https://drive.google.com/open?id=0B1S4dg5X_oh_VDZZbll3UzRKclE
 
+Examples
+--------------
 ![Deep Black](http://i.imgur.com/IOceOcS.png)
 ![Default](http://i.imgur.com/RiT0Fmb.png)
 
