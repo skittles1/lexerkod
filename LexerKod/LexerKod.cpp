@@ -83,7 +83,8 @@ bool IsRegionLine(StyleContext &sc, LexAccessor &styler)
    int pos = (int)sc.currentPos;
    int currentLine = styler.GetLine(pos);
    int lineEndPos = styler.LineEnd(currentLine);
-
+   if (pos == lineEndPos)
+      return false;
    if (sc.Match("#region"))
       pos += 6;
    else if (sc.Match("#endregion"))
@@ -293,14 +294,19 @@ bool IsStreamCommentStyle(int style)
 
 void AdvanceToCommentClose(StyleContext sc)
 {
+   if (sc.More())
+      sc.Forward();
+   else
+      return;
+
    while (sc.More() && !sc.Match("*/"))
    {
       if (sc.Match("/*"))
       {
-         sc.Forward();
          AdvanceToCommentClose(sc);
       }
-      sc.Forward();
+      if (sc.More())
+         sc.Forward();
    }
 }
 
@@ -568,6 +574,9 @@ bool IsConstantLine(StyleContext &sc, LexAccessor &styler, char *word)
    int lineStartPos = styler.LineStart(currentLine);
    int lineEndPos = styler.LineEnd(currentLine);
 
+   if (pos == lineEndPos)
+      return false;
+
    if (sc.ch == '\n')
       return false;
    int wordpos = 0;
@@ -808,14 +817,12 @@ void LexerKod::AddConstants(IDocument *pAccess, int initStyle, LexAccessor style
    {
       if (sc1.ch == '%' || sc1.Match("//"))
       {
-         while (sc1.ch != '\n')
+         while (sc1.More() && sc1.ch != '\n')
             sc1.Forward();
       }
       else if (sc1.Match("/*"))
       {
-         sc1.Forward();
          AdvanceToCommentClose(sc1);
-         sc1.Forward();
       }
       else if (!lineConstantsStart && sc1.Match("constants:"))
       {
@@ -1060,7 +1067,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          }
          break;
       case SCE_KOD_COMMENT:
-         if (sc.Match('*', '/'))
+         if (!sc.atLineEnd && sc.Match('*', '/'))
          {
             if (curNcLevel > 0)
                --curNcLevel;
@@ -1088,7 +1095,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          }
          break;
       case SCE_KOD_COMMENTDOC:
-         if (sc.Match('*', '/'))
+         if (!sc.atLineEnd && sc.Match('*', '/'))
          {
             sc.Forward();
             sc.ForwardSetState(SCE_KOD_DEFAULT | activitySet);
@@ -1266,7 +1273,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          {
             sc.SetState(SCE_KOD_CLASS | activitySet);
          }
-         else if (IsADigit(sc.ch) || (sc.ch == '.' && IsADigit(sc.chNext)))
+         else if (IsADigit(sc.ch) || (sc.ch == '.' && !!sc.atLineEnd && IsADigit(sc.chNext)))
          {
             sc.SetState(SCE_KOD_NUMBER | activitySet);
          }
@@ -1274,7 +1281,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          {
             sc.SetState(SCE_KOD_IDENTIFIER | activitySet);
          }
-         else if (sc.Match('/', '*'))
+         else if (!sc.atLineEnd && sc.Match('/', '*'))
          {
             if (sc.Match("/**") || sc.Match("/*!"))
             {	// Support of Qt/Doxygen doc. style
@@ -1289,7 +1296,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
             }
             sc.Forward();	// Eat the * so it isn't used for the end of the comment
          }
-         else if (sc.Match('%') || (sc.Match('/', '/')))
+         else if (sc.Match('%') || (!sc.atLineEnd && sc.Match('/', '/')))
          {
             if ((sc.Match("///") && !sc.Match("////")) || sc.Match("//!"))
                // Support of Qt/Doxygen doc. style
