@@ -23,6 +23,9 @@ Download Plugin
 --------------
 You can obtain the plugin at https://drive.google.com/open?id=0B1S4dg5X_oh_VDZZbll3UzRKclE
 
+[[http://i.imgur.com/IOceOcS.png|alt=Deep Black]]
+[[http://i.imgur.com/RiT0Fmb.png|alt=Default]]
+
 Build
 --------------
 Building LexerKod requires first building the Notepad++ and Scintilla
