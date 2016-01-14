@@ -23,6 +23,12 @@ Download Plugin
 --------------
 You can obtain the plugin at https://drive.google.com/open?id=0B1S4dg5X_oh_VDZZbll3UzRKclE
 
+If you have a previous version of LexerKod (v1.0.0 or v1.0.1) uninstalling it
+may remove the Deep Black Notepad++ theme. If this happens, download
+the theme [here](https://drive.google.com/open?id=0B1S4dg5X_oh_ZjhldEZMUDRzdzA)
+and copy it to C:\Users\<Your_User_Profile>\AppData\Roaming\Notepad++\themes.
+Current and future versions of the plugin won't do this on upgrade/uninstall.
+
 Examples
 --------------
 ![Deep Black](http://i.imgur.com/IOceOcS.png)
