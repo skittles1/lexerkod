@@ -842,7 +842,10 @@ void LexerKod::AddConstants(IDocument *pAccess, int initStyle, LexAccessor style
          while (sc1.More())
          {
             if (sc1.ch == ' ' || sc1.ch == '\t')
+            {
+               sc1.Forward();
                continue;
+            }
             else if (sc1.ch == '\n')
             {
                includeFile[filePos] = 0;
