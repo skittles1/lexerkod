@@ -48,7 +48,7 @@ class Script
                 },
 
                 MajorUpgradeStrategy = MajorUpgradeStrategy.Default,
-                Version = new Version("1.0.4.0"),
+                Version = new Version("1.0.5.0"),
                 GUID = new Guid("11f8c9e0-b62c-41a7-8aeb-1692f86755e3")
             };
         Compiler.PreserveTempFiles = false;
