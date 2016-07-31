@@ -2,10 +2,10 @@ LexerKod
 --------------
 
 LexerKod is a Notepad++ plugin that adds colorising and folding for
-Blakod (kod), the scripting language used in the MMORPG Meridian 59.
+Blakod (kod), the scripting language used in the MMORPG [Meridian 59](https://www.meridiannext.com).
 
 LexerKod includes support for:
-* Single line C++ // and kod % style comments
+* Single line C++ // comments
 * Multi-line C-style /* */ comments, nesting allowed
 * Coloring and autocomplete of C calls with parameter hints
 (autocomplete must be enabled in Notepad++'s settings)
@@ -16,23 +16,21 @@ declared in any included constant files
 * #region and #endregion folding
 * Folding at brackets and multi-line comments
 
-As of v1.03 the only themes available are the default (white background)
-and Notepad++ Deep Black themes.
+The plugin works with two Notepad++ themes, the default (white background)
+theme and the Deep Black theme.
 
 Download Plugin
 --------------
-You can obtain the plugin at https://drive.google.com/open?id=0B1S4dg5X_oh_VDZZbll3UzRKclE
-
-If you have a previous version of LexerKod (v1.0.0 or v1.0.1) uninstalling it
-may remove the Deep Black Notepad++ theme. If this happens, download
-the theme [here](https://drive.google.com/open?id=0B1S4dg5X_oh_ZjhldEZMUDRzdzA)
-and copy it to C:\Users\Your_User_Profile\AppData\Roaming\Notepad++\themes.
-Current and future versions of the plugin won't do this on upgrade/uninstall.
+[Direct download link for the plugin.](https://github.com/skittles1/lexerkod/blob/master/WixSharpInstaller/LexerKod.msi?raw=true)
 
 Examples
 --------------
-![Deep Black](http://i.imgur.com/IOceOcS.png)
-![Default](http://i.imgur.com/RiT0Fmb.png)
+<p align="center">
+   <img src="http://i.imgur.com/IOceOcS.png" width="512">
+</p>
+<p align="center">
+   <img src="http://i.imgur.com/RiT0Fmb.png" width="512">
+</p>
 
 Build
 --------------

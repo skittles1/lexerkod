@@ -116,7 +116,7 @@ bool IsParameter(StyleContext &sc, LexAccessor &styler)
    {
       char ch = styler.SafeGetCharAt(pos, '\n');
       if (ch == '#' || ch == '\n' || ch == ';' || ch == ')'
-         || ch == '(' || ch == '%' || ch == '\\' || ch == '*')
+         || ch == '(' || ch == '\\' || ch == '*')
          return false;
       if (ch == '=')
          return true;
@@ -460,7 +460,7 @@ public:
    explicit LexerKod(bool caseSensitive_) :
       caseSensitive(caseSensitive_),
       setWord(CharacterSet::setAlphaNum, "._", 0x80, true),
-      setArithmethicOp(CharacterSet::setNone, "+-/*"),
+      setArithmethicOp(CharacterSet::setNone, "+-/*%"),
       setRelOp(CharacterSet::setNone, "=<>"),
       subStyles(styleSubable, 0x80, 0x40, activeFlag)
    {
@@ -583,7 +583,7 @@ bool IsConstantLine(StyleContext &sc, LexAccessor &styler, char *word)
    for (int i = lineStartPos; i < lineEndPos; ++i)
    {
       char ch = styler.SafeGetCharAt(i, '\n');
-      if ((ch == '//' && styler.SafeGetCharAt(i + 1, '\n') == '//') || ch == '%' || ch == '\n')
+      if ((ch == '//' && styler.SafeGetCharAt(i + 1, '\n') == '//') || ch == '\n')
          return false;
       if (ch == ' ' || ch == '\t' || ch == '\r')
          continue;
@@ -774,7 +774,7 @@ std::string LexerKod::ParseIncludeFile(char *file)
          continue;
       for (size_t i = 0; i < strlen(line); ++i)
       {
-         if (line[i] == '%' || (line[i] == '\\' && i + 1 < strlen(line) && line[i + 1] == '\\'))
+         if (line[i] == '\\' && i + 1 < strlen(line) && line[i + 1] == '\\')
             break;
          if (line[i] == '\\' && i + 1 < strlen(line) && line[i + 1] == '*')
             ++commentDepth;
@@ -815,7 +815,7 @@ void LexerKod::AddConstants(IDocument *pAccess, int initStyle, LexAccessor style
    int lineConstantsEnd = 0;
    for (; sc1.More();)
    {
-      if (sc1.ch == '%' || sc1.Match("//"))
+      if (sc1.Match("//"))
       {
          while (sc1.More() && sc1.ch != '\n')
             sc1.Forward();
@@ -1299,7 +1299,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
             }
             sc.Forward();	// Eat the * so it isn't used for the end of the comment
          }
-         else if (sc.Match('%') || (!sc.atLineEnd && sc.Match('/', '/')))
+         else if (!sc.atLineEnd && sc.Match('/', '/'))
          {
             if ((sc.Match("///") && !sc.Match("////")) || sc.Match("//!"))
                // Support of Qt/Doxygen doc. style

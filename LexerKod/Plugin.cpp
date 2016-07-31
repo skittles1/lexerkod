@@ -29,7 +29,7 @@ void About()
       L"https://github.com/poiru/rainlexer\n"
       L"https://github.com/notepad-plus-plus/notepad-plus-plus\n\n"
       L"LexerKod includes proper multi-line comment, bracket and #region/#endregion "
-      L"folding, support for //, /* */ and % comment types, colors for C calls, "
+      L"folding, support for // and /* */ comment types, colors for C calls, "
       L"class and message names (anything prefixed with @ or &) keywords and constants. "
       L"Constants are loaded from include files provided they are in the same "
       L"directory as the kod file, or in the kod\\include folder. Please report "
