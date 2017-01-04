@@ -11,3 +11,5 @@ Release
 *.wxs
 /packages
 *.config
+*.db
+*.opendb

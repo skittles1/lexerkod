@@ -132,8 +132,13 @@
             <Param name="params"/>
          </Overload>
       </KeyWord>
+      <KeyWord name="DelLastListElem" func="yes">
+         <Overload retVal="list" descr="Returns $ if not passed a list, or a single-element list.">
+            <Param name="list"/>
+         </Overload>
+      </KeyWord>
       <KeyWord name="DelListElem" func="yes">
-         <Overload retVal="boolean" descr="Returns $ if not passed a list.">
+         <Overload retVal="list" descr="Returns $ if not passed a list, or a single-element list.">
             <Param name="list"/>
             <Param name="element"/>
          </Overload>
@@ -179,6 +184,16 @@
       <KeyWord name="GetClass" func="yes">
          <Overload retVal="class">
             <Param name="object"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="GetDateAndTime" func="yes">
+         <Overload retVal="$" descr="Puts the appropriate local time values into the passed&#x0a;localvars. Accounts for daylight savings time.">
+            <Param name="*local year"/>
+            <Param name="*local month"/>
+            <Param name="*local day"/>
+            <Param name="*local hour"/>
+            <Param name="*local minute"/>
+            <Param name="*local second"/>
          </Overload>
       </KeyWord>
       <KeyWord name="GetInactiveTime" func="yes">
@@ -265,10 +280,6 @@
       <KeyWord name="GetTimeRemaining" func="yes">
          <Overload retVal="int milliseconds">
             <Param name="timer"/>
-         </Overload>
-      </KeyWord>
-      <KeyWord name="GetTimeZoneOffset" func="yes">
-         <Overload retVal="int seconds" descr="Returns the amount of seconds that must be added to local time to equal UTC.&#x0a;Subtracting this number from UTC (GetTime()) equals local time.">
          </Overload>
       </KeyWord>
       <KeyWord name="GodLog" func="yes">
@@ -369,17 +380,6 @@
       <KeyWord name="LoadRoom" func="yes">
          <Overload retVal="TAG_ROOM_DATA room_data">
             <Param name="resource filename"/>
-         </Overload>
-      </KeyWord>
-      <KeyWord name="MiniGameNumberToString" func="yes">
-         <Overload retVal="$" descr="Sets the given string to the given number.">
-            <Param name="string"/>
-            <Param name="int number"/>
-         </Overload>
-      </KeyWord>
-      <KeyWord name="MiniGameStringToNumber" func="yes">
-         <Overload retVal="int">
-            <Param name="string"/>
          </Overload>
       </KeyWord>
       <KeyWord name="MoveSectorBSP" func="yes">
@@ -558,6 +558,11 @@
             <Param name="string"/>
             <Param name="search_string"/>
             <Param name="sub_string"/>
+         </Overload>
+      </KeyWord>
+      <KeyWord name="StringToNumber" func="yes">
+         <Overload retVal="int" descr="Returns the int value of a string, if the string contains a number.">
+            <Param name="string"/>
          </Overload>
       </KeyWord>
       <KeyWord name="SwapListElem" func="yes">

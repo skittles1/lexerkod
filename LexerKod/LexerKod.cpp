@@ -1233,7 +1233,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
          break;
       case SCE_KOD_MESSAGE:
       case SCE_KOD_CLASS:
-         if (sc.ch == ',' || sc.ch == ')' || sc.ch == '\n' || sc.ch == ' ' || sc.ch == ']')
+         if (!IsAlphaNumeric(sc.ch))
          {
             sc.SetState(SCE_KOD_DEFAULT | activitySet);
          }
@@ -1268,7 +1268,7 @@ void SCI_METHOD LexerKod::Lex(unsigned int startPos, int length, int initStyle, 
       // Determine if a new state should be entered.
       if (MaskActive(sc.state) == SCE_KOD_DEFAULT)
       {
-         if (sc.ch == '@' && visibleChars && !sc.atLineEnd && IsUpperCase(sc.chNext))
+         if (sc.ch == '@' && !sc.atLineEnd && IsUpperCase(sc.chNext))
          {
             sc.SetState(SCE_KOD_MESSAGE | activitySet);
          }
